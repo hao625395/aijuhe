@@ -22,6 +22,7 @@ import type {
   PaymentRequest,
   AmountRequest,
   AffiliateTransferRequest,
+  AffiliateSummaryResponse,
   ApiResponse,
   TopupInfoResponse,
   RedemptionResponse,
@@ -173,6 +174,11 @@ export async function requestWaffoPancakePayment(
  */
 export async function getAffiliateCode(): Promise<AffiliateCodeResponse> {
   const res = await api.get('/api/user/aff')
+  return res.data
+}
+
+export async function getAffiliateSummary(): Promise<AffiliateSummaryResponse> {
+  const res = await api.get('/api/user/aff_summary')
   return res.data
 }
 

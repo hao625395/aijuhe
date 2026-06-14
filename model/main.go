@@ -248,6 +248,11 @@ func InitLogDB() (err error) {
 }
 
 func migrateDB() error {
+	if common.UsingSQLite {
+		if err := repairSQLiteUserAffCommissionRateDDL(); err != nil {
+			return err
+		}
+	}
 	// Migrate price_amount column from float/double to decimal for existing tables
 	migrateSubscriptionPlanPriceAmount()
 	// Migrate model_limits column from varchar to text for existing tables
@@ -266,6 +271,7 @@ func migrateDB() error {
 		&Log{},
 		&Midjourney{},
 		&TopUp{},
+		&AffiliateCommission{},
 		&QuotaData{},
 		&Task{},
 		&Model{},
@@ -315,6 +321,7 @@ func migrateDBFast() error {
 		{&Log{}, "Log"},
 		{&Midjourney{}, "Midjourney"},
 		{&TopUp{}, "TopUp"},
+		{&AffiliateCommission{}, "AffiliateCommission"},
 		{&QuotaData{}, "QuotaData"},
 		{&Task{}, "Task"},
 		{&Model{}, "Model"},
@@ -378,6 +385,27 @@ func migrateLOGDB() error {
 type sqliteColumnDef struct {
 	Name string
 	DDL  string
+}
+
+func repairSQLiteUserAffCommissionRateDDL() error {
+	if !common.UsingSQLite {
+		return nil
+	}
+	var tableSQL string
+	if err := DB.Raw(`SELECT sql FROM sqlite_master WHERE type = "table" AND name = "users"`).Scan(&tableSQL).Error; err != nil {
+		return err
+	}
+	if tableSQL == "" || !strings.Contains(tableSQL, "`aff_commission_rate` decimal(6,4)") {
+		return nil
+	}
+	if err := DB.Exec("PRAGMA writable_schema = ON").Error; err != nil {
+		return err
+	}
+	if err := DB.Exec(`UPDATE sqlite_master SET sql = REPLACE(sql, "` + "`aff_commission_rate` decimal(6,4)" + `", "` + "`aff_commission_rate` real" + `") WHERE type = "table" AND name = "users"`).Error; err != nil {
+		_ = DB.Exec("PRAGMA writable_schema = OFF").Error
+		return err
+	}
+	return DB.Exec("PRAGMA writable_schema = OFF").Error
 }
 
 func ensureSubscriptionPlanTableSQLite() error {

@@ -21,8 +21,13 @@ import i18next from 'i18next'
 import { toast } from 'sonner'
 import { getSelf } from '@/lib/api'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
-import { getAffiliateCode, transferAffiliateQuota } from '../api'
+import {
+  getAffiliateCode,
+  getAffiliateSummary,
+  transferAffiliateQuota,
+} from '../api'
 import { generateAffiliateLink } from '../lib'
+import type { AffiliateSummary } from '../types'
 
 // ============================================================================
 // Affiliate Hook
@@ -31,6 +36,7 @@ import { generateAffiliateLink } from '../lib'
 export function useAffiliate() {
   const [affiliateCode, setAffiliateCode] = useState<string>('')
   const [affiliateLink, setAffiliateLink] = useState<string>('')
+  const [summary, setSummary] = useState<AffiliateSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [transferring, setTransferring] = useState(false)
   const { copyToClipboard } = useCopyToClipboard()
@@ -45,6 +51,10 @@ export function useAffiliate() {
         setAffiliateCode(response.data)
         const link = generateAffiliateLink(response.data)
         setAffiliateLink(link)
+      }
+      const summaryResponse = await getAffiliateSummary()
+      if (summaryResponse.success && summaryResponse.data) {
+        setSummary(summaryResponse.data)
       }
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -68,6 +78,10 @@ export function useAffiliate() {
       if (response.success) {
         toast.success(response.message || i18next.t('Transfer successful'))
         await getSelf()
+        const summaryResponse = await getAffiliateSummary()
+        if (summaryResponse.success && summaryResponse.data) {
+          setSummary(summaryResponse.data)
+        }
         return true
       }
 
@@ -88,6 +102,7 @@ export function useAffiliate() {
   return {
     affiliateCode,
     affiliateLink,
+    summary,
     loading,
     transferring,
     copyAffiliateLink,

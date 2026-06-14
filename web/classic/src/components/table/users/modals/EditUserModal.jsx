@@ -92,6 +92,7 @@ const EditUserModal = (props) => {
     email: '',
     quota: 0,
     quota_amount: 0,
+    aff_commission_rate_percent: 0,
     group: 'default',
     remark: '',
   });
@@ -116,6 +117,9 @@ const EditUserModal = (props) => {
       data.password = '';
       data.quota_amount = Number(
         quotaToDisplayAmount(data.quota || 0).toFixed(6),
+      );
+      data.aff_commission_rate_percent = Number(
+        ((data.aff_commission_rate || 0) * 100).toFixed(2),
       );
       setInputs({ ...getInitValues(), ...data });
     } else {
@@ -148,6 +152,9 @@ const EditUserModal = (props) => {
   const submit = async (values) => {
     setLoading(true);
     let payload = { ...values };
+    payload.aff_commission_rate =
+      Number(payload.aff_commission_rate_percent || 0) / 100;
+    delete payload.aff_commission_rate_percent;
     delete payload.quota;
     delete payload.quota_amount;
     if (userId) {
@@ -365,6 +372,21 @@ const EditUserModal = (props) => {
                           allowAdditions
                           search
                           rules={[{ required: true, message: t('请选择分组') }]}
+                        />
+                      </Col>
+
+                      <Col span={24}>
+                        <Form.InputNumber
+                          field='aff_commission_rate_percent'
+                          label='邀请返佣比例'
+                          placeholder='填 0 使用默认 5%'
+                          suffix='%'
+                          min={0}
+                          max={100}
+                          precision={2}
+                          step={0.5}
+                          style={{ width: '100%' }}
+                          extraText='可为代理或大客户单独设置返佣比例，填 0 使用默认 5%。'
                         />
                       </Col>
 

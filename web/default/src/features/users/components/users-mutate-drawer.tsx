@@ -358,6 +358,39 @@ export function UsersMutateDrawer({
 
                   <FormField
                     control={form.control}
+                    name='aff_commission_rate_percent'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Referral Commission Rate')}</FormLabel>
+                        <div className='flex items-center gap-2'>
+                          <FormControl>
+                            <Input
+                              type='number'
+                              min={0}
+                              max={100}
+                              step={0.1}
+                              value={field.value ?? 0}
+                              onChange={(event) =>
+                                field.onChange(Number(event.target.value) || 0)
+                              }
+                            />
+                          </FormControl>
+                          <span className='text-muted-foreground text-sm font-medium'>
+                            %
+                          </span>
+                        </div>
+                        <FormDescription>
+                          {t(
+                            'Set a custom referral commission rate for agents or key customers. Use 0 for the default 5%.'
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name='quota_dollars'
                     render={({ field }) => (
                       <FormItem>

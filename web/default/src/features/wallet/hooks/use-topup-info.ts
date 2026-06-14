@@ -161,6 +161,48 @@ function parseDiscountMap(data: unknown): Record<number, number> {
   )
 }
 
+function parseNumberMap(data: unknown): Record<number, number> {
+  if (!data) {
+    return {}
+  }
+
+  let parsedData = data
+
+  if (typeof data === 'string') {
+    try {
+      parsedData = JSON.parse(data)
+    } catch {
+      return {}
+    }
+  }
+
+  if (
+    !parsedData ||
+    typeof parsedData !== 'object' ||
+    Array.isArray(parsedData)
+  ) {
+    return {}
+  }
+
+  return Object.entries(parsedData).reduce<Record<number, number>>(
+    (result, [key, value]) => {
+      const numericKey = Number(key)
+      const numericValue = Number(value)
+
+      if (
+        Number.isFinite(numericKey) &&
+        Number.isFinite(numericValue) &&
+        numericValue > 0
+      ) {
+        result[numericKey] = numericValue
+      }
+
+      return result
+    },
+    {}
+  )
+}
+
 export function useTopupInfo() {
   const [topupInfo, setTopupInfo] = useState<TopupInfo | null>(null)
   const [presetAmounts, setPresetAmounts] = useState<PresetAmount[]>([])
@@ -186,6 +228,7 @@ export function useTopupInfo() {
         ),
         amount_options: parseAmountOptions(response.data.amount_options),
         discount: parseDiscountMap(response.data.discount),
+        bonus: parseNumberMap(response.data.bonus),
         creem_products: parseCreemProducts(response.data.creem_products),
         waffo_pay_methods: parseWaffoPayMethods(
           response.data.waffo_pay_methods

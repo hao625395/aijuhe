@@ -41,6 +41,7 @@ export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
 export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
+export type AffiliateSummaryResponse = ApiResponse<AffiliateSummary>
 export type CreemPaymentResponse = ApiResponse<{ checkout_url: string }>
 export type WaffoPaymentResponse = ApiResponse<
   { payment_url?: string } | string
@@ -134,6 +135,8 @@ export interface TopupInfo {
   amount_options: number[]
   /** Discount rates by amount */
   discount: Record<number, number>
+  /** Bonus quota by amount */
+  bonus?: Record<number, number>
   /** Optional topup link for purchasing codes */
   topup_link?: string
   /** Whether Creem topup is enabled */
@@ -220,6 +223,38 @@ export interface AffiliateTransferRequest {
   quota: number
 }
 
+export interface AffiliateCommissionRecord {
+  id: number
+  inviter_id: number
+  invitee_id: number
+  topup_id: number
+  trade_no: string
+  topup_amount: number
+  commission_rate: number
+  commission_quota: number
+  create_time: number
+}
+
+export interface AffiliateInviteeSummary {
+  id: number
+  username: string
+  display_name?: string
+  email?: string
+  aff_history_quota: number
+  created_at: number
+}
+
+export interface AffiliateSummary {
+  rate: number
+  pending_quota: number
+  history_quota: number
+  invite_count: number
+  today_quota: number
+  month_quota: number
+  records: AffiliateCommissionRecord[]
+  invited_users: AffiliateInviteeSummary[]
+}
+
 /**
  * User wallet data
  */
@@ -240,6 +275,8 @@ export interface UserWalletData {
   aff_history_quota: number
   /** Number of successful affiliate invites */
   aff_count: number
+  /** Effective affiliate commission rate */
+  aff_commission_rate?: number
   /** User group */
   group: string
 }

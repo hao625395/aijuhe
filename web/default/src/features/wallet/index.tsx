@@ -93,6 +93,7 @@ export function Wallet(props: WalletProps) {
   } = usePayment()
   const {
     affiliateLink,
+    summary: affiliateSummary,
     loading: affiliateLoading,
     transferQuota,
     transferring,
@@ -164,16 +165,51 @@ export function Wallet(props: WalletProps) {
   // Handle payment method selection
   const handlePaymentMethodSelect = async (method: PaymentMethod) => {
     setSelectedPaymentMethod(method)
-    setPaymentLoading(method.type)
+    calculatePaymentAmount(topupAmount, method.type)
+  }
 
+  const handlePresetRecharge = async (preset: PresetAmount) => {
+    const method =
+      selectedPaymentMethod ||
+      topupInfo?.pay_methods?.[0] ||
+      (topupInfo?.enable_stripe_topup
+        ? { name: 'Stripe', type: 'stripe' }
+        : undefined)
+
+    if (!method) return
+
+    const loadingKey = `${method.type}:${preset.value}`
+    setPaymentLoading(loadingKey)
     try {
-      // Validate minimum topup
-      const minTopup = getMinTopupAmount(topupInfo)
-      if (topupAmount < minTopup) {
-        return
-      }
+      setTopupAmount(preset.value)
+      setSelectedPreset(preset.value)
+      setSelectedPaymentMethod(method)
+      await calculatePaymentAmount(preset.value, method.type)
+      setConfirmDialogOpen(true)
+    } finally {
+      setPaymentLoading(null)
+    }
+  }
 
-      // Calculate payment amount and show confirmation dialog
+  const handleCustomRecharge = async () => {
+    const method =
+      selectedPaymentMethod ||
+      topupInfo?.pay_methods?.[0] ||
+      (topupInfo?.enable_stripe_topup
+        ? { name: 'Stripe', type: 'stripe' }
+        : undefined)
+
+    if (!method) return
+
+    const minTopup = getMinTopupAmount(topupInfo)
+    if (topupAmount < minTopup) {
+      return
+    }
+
+    const loadingKey = `${method.type}:custom`
+    setPaymentLoading(loadingKey)
+    try {
+      setSelectedPaymentMethod(method)
       await calculatePaymentAmount(topupAmount, method.type)
       setConfirmDialogOpen(true)
     } finally {
@@ -283,6 +319,9 @@ export function Wallet(props: WalletProps) {
                   paymentAmount={paymentAmount}
                   calculating={calculating}
                   onPaymentMethodSelect={handlePaymentMethodSelect}
+                  selectedPaymentMethod={selectedPaymentMethod}
+                  onPresetRecharge={handlePresetRecharge}
+                  onCustomRecharge={handleCustomRecharge}
                   paymentLoading={paymentLoading}
                   redemptionCode={redemptionCode}
                   onRedemptionCodeChange={setRedemptionCode}
@@ -317,6 +356,7 @@ export function Wallet(props: WalletProps) {
             <AffiliateRewardsCard
               user={user}
               affiliateLink={affiliateLink}
+              summary={affiliateSummary}
               onTransfer={() => setTransferDialogOpen(true)}
               complianceConfirmed={
                 topupInfo?.payment_compliance_confirmed !== false

@@ -41,6 +41,8 @@ interface DocItem {
   markdown: string
 }
 
+let docsDataCache: DocItem[] | null = null
+
 // 复制代码块组件 (TS)
 const CodeBlock: React.FC<CodeBlockProps> = ({ code, title }) => {
   const [copied, setCopied] = useState<boolean>(false)
@@ -796,9 +798,23 @@ const Docs: React.FC = () => {
 
   useEffect(() => {
     // 异步加载飞书文档的数据包
-    fetch('/docs-data.json?t=' + Date.now())
+    if (docsDataCache && docsDataCache.length > 0) {
+      setDocs(docsDataCache)
+      const urlParams = new URLSearchParams(window.location.search)
+      const idParam = urlParams.get('id')
+      if (idParam && docsDataCache.some((d) => d.id === idParam)) {
+        setActiveDocId(idParam)
+      } else {
+        setActiveDocId(docsDataCache[0].id)
+      }
+      setLoading(false)
+      return
+    }
+
+    fetch('/docs-data.json', { cache: 'force-cache' })
       .then((res) => res.json())
       .then((data: DocItem[]) => {
+        docsDataCache = data
         setDocs(data)
         if (data && data.length > 0) {
           const urlParams = new URLSearchParams(window.location.search)
@@ -834,9 +850,63 @@ const Docs: React.FC = () => {
   }, [activeDocId])
 
   if (loading) {
+    const idParam =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('id')
+        : null
+
+    if (idParam === 'contact-customer-service') {
+      return (
+        <div className='flex flex-col pt-12 max-w-7xl mx-auto w-full px-4 md:px-8 pb-12 text-foreground'>
+          <div className='flex flex-col md:flex-row gap-8'>
+            <div className='hidden w-full flex-shrink-0 md:block md:w-80'>
+              <div className='sticky top-24 space-y-6'>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className='space-y-3'>
+                    <div className='h-5 w-44 animate-pulse rounded bg-muted' />
+                    <div className='space-y-2 pl-7'>
+                      <div className='h-8 animate-pulse rounded-lg bg-muted/70' />
+                      <div className='h-8 animate-pulse rounded-lg bg-muted/60' />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className='flex-1 min-w-0 max-w-4xl bg-card border border-border p-6 md:p-10 rounded-2xl shadow-sm'>
+              <ContactView />
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
-      <div className='flex items-center justify-center min-h-[500px] text-muted-foreground'>
-        <span>正在读取文档 data...</span>
+      <div className='flex flex-col pt-12 max-w-7xl mx-auto w-full px-4 md:px-8 pb-12 text-foreground'>
+        <div className='flex flex-col md:flex-row gap-8'>
+          <div className='w-full flex-shrink-0 md:w-80'>
+            <div className='sticky top-24 space-y-6'>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className='space-y-3'>
+                  <div className='h-5 w-44 animate-pulse rounded bg-muted' />
+                  <div className='space-y-2 pl-7'>
+                    <div className='h-8 animate-pulse rounded-lg bg-muted/70' />
+                    <div className='h-8 animate-pulse rounded-lg bg-muted/60' />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className='flex-1 min-w-0 max-w-4xl bg-card border border-border p-6 md:p-10 rounded-2xl shadow-sm'>
+            <div className='space-y-5'>
+              <div className='h-9 w-2/3 animate-pulse rounded bg-muted' />
+              <div className='h-4 w-full animate-pulse rounded bg-muted/70' />
+              <div className='h-4 w-5/6 animate-pulse rounded bg-muted/70' />
+              <div className='h-32 w-full animate-pulse rounded-xl bg-muted/60' />
+              <div className='h-4 w-full animate-pulse rounded bg-muted/70' />
+              <div className='h-4 w-4/5 animate-pulse rounded bg-muted/70' />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -931,7 +1001,7 @@ const Docs: React.FC = () => {
         </code>
       )
     },
-    img({ node, src, alt, ...props }: any) {
+    img({ src, alt }: any) {
       return (
         <DocImage 
           src={src} 

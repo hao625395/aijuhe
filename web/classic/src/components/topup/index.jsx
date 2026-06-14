@@ -34,8 +34,8 @@ import { useTranslation } from 'react-i18next';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
 
-import RechargeCard from './RechargeCard';
-import InvitationCard from './InvitationCard';
+import RechargeCard from './RechargeCardAijuhe';
+import InvitationCard from './InvitationCardAijuhe';
 import TransferModal from './modals/TransferModal';
 import PaymentConfirmModal from './modals/PaymentConfirmModal';
 import TopupHistoryModal from './modals/TopupHistoryModal';
@@ -105,6 +105,7 @@ const TopUp = () => {
 
   // 邀请相关状态
   const [affLink, setAffLink] = useState('');
+  const [affSummary, setAffSummary] = useState(null);
   const [openTransfer, setOpenTransfer] = useState(false);
   const [transferAmount, setTransferAmount] = useState(0);
 
@@ -127,6 +128,7 @@ const TopUp = () => {
   const [topupInfo, setTopupInfo] = useState({
     amount_options: [],
     discount: {},
+    bonus: {},
     enable_redemption: true,
     payment_compliance_confirmed: true,
   });
@@ -608,6 +610,7 @@ const TopUp = () => {
         setTopupInfo({
           amount_options: data.amount_options || [],
           discount: data.discount || {},
+          bonus: data.bonus || {},
         });
 
         // 处理支付方式
@@ -743,6 +746,14 @@ const TopUp = () => {
     }
   };
 
+  const getAffSummary = async () => {
+    const res = await API.get('/api/user/aff_summary');
+    const { success, data } = res.data;
+    if (success) {
+      setAffSummary(data);
+    }
+  };
+
   // 划转邀请额度
   const transfer = async () => {
     if (transferAmount < getQuotaPerUnit()) {
@@ -757,6 +768,7 @@ const TopUp = () => {
       showSuccess(message);
       setOpenTransfer(false);
       getUserQuota().then();
+      getAffSummary().then();
     } else {
       showError(message);
     }
@@ -787,6 +799,7 @@ const TopUp = () => {
     if (affFetchedRef.current) return;
     affFetchedRef.current = true;
     getAffLink().then();
+    getAffSummary().then();
   }, []);
 
   // 在 statusState 可用时获取充值信息
@@ -1030,6 +1043,7 @@ const TopUp = () => {
           renderQuota={renderQuota}
           setOpenTransfer={setOpenTransfer}
           affLink={affLink}
+          affSummary={affSummary}
           handleAffLinkClick={handleAffLinkClick}
           complianceConfirmed={topupInfo.payment_compliance_confirmed !== false}
         />

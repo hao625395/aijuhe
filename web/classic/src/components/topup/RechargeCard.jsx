@@ -105,6 +105,7 @@ const RechargeCard = ({
   const showAmountSkeleton = useMinimumLoadingTime(amountLoading);
   const actualTheme = useActualTheme();
   const [activeTab, setActiveTab] = useState('topup');
+  const [rechargingPlanKey, setRechargingPlanKey] = useState(null);
   const shouldShowSubscription =
     !subscriptionLoading && subscriptionPlans.length > 0;
   const regularPayMethods = payMethods || [];
@@ -145,7 +146,13 @@ const RechargeCard = ({
 
     const payMethod = getAvailablePayMethod(plan.value);
     if (!payMethod) return;
-    await preTopUp(payMethod.type, plan.value);
+    const loadingKey = `${payMethod.type}:${plan.value}`;
+    setRechargingPlanKey(loadingKey);
+    try {
+      await preTopUp(payMethod.type, plan.value);
+    } finally {
+      setRechargingPlanKey(null);
+    }
   };
 
   const renderRechargePlans = () => (
@@ -157,6 +164,10 @@ const RechargeCard = ({
         const accent = plan.featured ? '#b45309' : '#0369a1';
         const borderColor = plan.featured ? '#fb923c' : '#e5e7eb';
         const activeBorder = plan.featured ? '#ea580c' : '#0ea5e9';
+        const bonus = Number(topupInfo?.bonus?.[plan.value] || 0);
+        const receiveAmount = plan.value + bonus;
+        const loadingKey = payMethod ? `${payMethod.type}:${plan.value}` : '';
+        const buttonLoading = paymentLoading && rechargingPlanKey === loadingKey;
 
         return (
           <div
@@ -193,27 +204,44 @@ const RechargeCard = ({
             )}
 
             <div className={`flex flex-1 flex-col ${plan.badge ? 'pt-7' : 'pt-1'}`}>
-              <div className='text-sm font-bold leading-5 text-slate-950'>
+              <div className='text-sm font-bold leading-5' style={{ color: '#1e293b' }}>
                 {plan.title}
               </div>
-              <div className='mt-0.5 text-xs leading-5 text-slate-500'>
+              <div className='mt-0.5 text-xs leading-5' style={{ color: '#475569' }}>
                 {plan.subtitle}
               </div>
 
               <div className='mt-3 flex items-end gap-1.5'>
-                <span className='text-2xl font-semibold text-slate-400'>¥</span>
-                <span className='text-3xl font-black leading-none text-slate-950'>
+                <span className='text-2xl font-semibold' style={{ color: '#475569' }}>¥</span>
+                <span className='text-3xl font-black leading-none' style={{ color: '#0f172a' }}>
                   {formatLargeNumber(plan.value)}
                 </span>
               </div>
 
-              <div className='mt-2 text-xs leading-5 text-slate-500'>
-                获得 <span className='font-semibold' style={{ color: accent }}>${plan.value}</span> 额度
+              <div className='mt-2 text-xs leading-5' style={{ color: '#334155' }}>
+                获得{' '}
+                {bonus > 0 && (
+                  <span
+                    className='mr-1 line-through'
+                    style={{ color: '#94a3b8' }}
+                  >
+                    ${plan.value}
+                  </span>
+                )}
+                <span className='font-semibold' style={{ color: accent }}>
+                  ${receiveAmount}
+                </span>{' '}
+                额度
+                {bonus > 0 && (
+                  <Tag color='orange' size='small' style={{ marginLeft: 6 }}>
+                    赠送 ${bonus}
+                  </Tag>
+                )}
               </div>
 
-              <div className='mt-3 space-y-1 text-xs leading-5 text-slate-600'>
+              <div className='mt-3 space-y-1 text-xs leading-5' style={{ color: '#1e293b' }}>
                 {[
-                  `获得 $${plan.value} 额度`,
+                  `获得 $${receiveAmount} 额度`,
                   '永不过期',
                   '支持全部模型',
                 ].map((item) => (
@@ -228,7 +256,7 @@ const RechargeCard = ({
                 theme='solid'
                 type={plan.featured ? 'warning' : 'primary'}
                 disabled={disabled}
-                loading={paymentLoading && payWay === payMethod?.type}
+                loading={buttonLoading}
                 onClick={(event) => {
                   event.stopPropagation();
                   handleRechargePlanClick(plan);
