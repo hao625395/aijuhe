@@ -134,6 +134,23 @@ const renderVendorAvatar = (vendor, t, isAllVendors = false) => {
   );
 };
 
+const getLowestCodexPricingGroup = (groupRatio = {}) => {
+  const codexGroups = Object.entries(groupRatio)
+    .map(([name, ratio]) => ({
+      name,
+      ratio: Number(ratio),
+    }))
+    .filter(
+      ({ name, ratio }) =>
+        name &&
+        name.toLowerCase().includes('codex') &&
+        Number.isFinite(ratio),
+    )
+    .sort((a, b) => a.ratio - b.ratio || a.name.localeCompare(b.name));
+
+  return codexGroups[0] || null;
+};
+
 const PricingVendorIntro = memo(
   ({
     filterVendor,
@@ -236,10 +253,17 @@ const PricingVendorIntro = memo(
 
     const currentModelCount = models.length;
     const pricingRuleData = useMemo(() => {
+      const defaultPricingGroup = getLowestCodexPricingGroup(groupRatio);
       const effectiveGroup =
-        filterGroup === 'all' ? CONFIG.DEFAULT_PRICING_GROUP : filterGroup;
+        filterGroup === 'all'
+          ? defaultPricingGroup?.name || CONFIG.DEFAULT_PRICING_GROUP
+          : filterGroup;
       const groupName = effectiveGroup;
-      const parsedRatio = Number(groupRatio?.[effectiveGroup]);
+      const parsedRatio = Number(
+        filterGroup === 'all'
+          ? defaultPricingGroup?.ratio
+          : groupRatio?.[effectiveGroup],
+      );
       const ratio =
         Number.isFinite(parsedRatio)
           ? parsedRatio
