@@ -3678,7 +3678,16 @@
     "知悉相关法律风险": "acknowledge the related legal risks",
     "并确认自行承担部署": "confirm that I bear legal responsibility arising from deployment",
     "运营和收费行为产生的法律责任": "operation and charging behavior",
+    "计价规则": "Règles de tarification",
+    "官方价格默认按 $1 = ￥7 折算；本站充值按 ￥1 = $1 账户余额 入账，因此模型广场显示的 $ 为账户余额计价，并不等同于官方真实美元成本。": "Le prix officiel est converti par défaut à $1 = 7 CNY. Sur ce site, la recharge crédite 1 CNY = 1 $ de solde de compte ; le $ affiché dans la Place des modèles correspond donc au solde du compte et non au coût réel officiel en USD.",
+    "账户扣费 = 官方美元价格 × 分组倍率": "Débit du compte = prix officiel en USD × multiplicateur du groupe",
+    "示例：gpt-5.5 输入价官方为 $5 / M tokens，Codex Pro（仅限 Codex） 分组倍率为 0.72x，则账户实际扣费为：": "Exemple : l'entrée de gpt-5.5 coûte officiellement $5 / M tokens, et le multiplicateur du groupe Codex Pro (Codex uniquement) est de 0.72x ; le débit réel du compte est donc :",
+    "由于充值按 ￥1 = $1 账户余额，所以实际相当于花费 ￥3.60。按官方汇率 $1 = ￥7 折算，约等于真实美元 $0.51，也就是官方价格 $5 的约 1 折。": "Comme la recharge crédite 1 CNY = 1 $ de solde, cela équivaut à dépenser 3,60 CNY. Converti au taux officiel $1 = 7 CNY, cela représente environ 0,51 USD réels, soit environ 10 % du prix officiel de $5.",
+    "简易公式：0.72人民币 = 1美元用量": "Formule simple : 0,72 CNY = 1 $ d'utilisation",
     "，": ", ",
-    "、": ", "
+    "、": ", ",
+    "???{{modelName}} ?????? ${{officialPrice}} / M tokens?{{groupName}} ????? {{ratio}}x??????????": "Exemple : le prix officiel en entr?e de {{modelName}} est de ${{officialPrice}} / M tokens, et le multiplicateur du groupe {{groupName}} est {{ratio}}x ; le d?bit r?el du compte est donc :",
+    "????? ?1 = $1 ?????????????? ?{{accountCharge}}?????? $1 = ?7 ?????????? ${{realUsd}}???????? ${{officialPrice}} ?? {{discount}} ??": "Comme le rechargement cr?dite CNY 1 = $1 de solde, cela ?quivaut ? d?penser CNY {{accountCharge}}. Au taux officiel de $1 = CNY 7, cela repr?sente environ ${{realUsd}} r?els, soit environ {{discount}}/10 du prix officiel de ${{officialPrice}}.",
+    "?????{{ratio}}??? = 1????": "Formule simple : CNY {{ratio}} = $1 d?utilisation"
   }
 }

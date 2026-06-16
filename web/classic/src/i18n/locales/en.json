@@ -3824,7 +3824,16 @@
     "知悉相关法律风险": "acknowledge the related legal risks",
     "并确认自行承担部署": "confirm that I bear legal responsibility arising from deployment",
     "运营和收费行为产生的法律责任": "operation and charging behavior",
+    "计价规则": "Pricing rules",
+    "官方价格默认按 $1 = ￥7 折算；本站充值按 ￥1 = $1 账户余额 入账，因此模型广场显示的 $ 为账户余额计价，并不等同于官方真实美元成本。": "Official prices are converted at $1 = CNY 7 by default. This site tops up at CNY 1 = $1 account balance, so the $ shown in Model Square is account-balance pricing and is not the same as the official real USD cost.",
+    "账户扣费 = 官方美元价格 × 分组倍率": "Account charge = official USD price × group multiplier",
+    "示例：gpt-5.5 输入价官方为 $5 / M tokens，Codex Pro（仅限 Codex） 分组倍率为 0.72x，则账户实际扣费为：": "Example: gpt-5.5 input is officially $5 / M tokens, and the Codex Pro (Codex only) group multiplier is 0.72x, so the actual account charge is:",
+    "由于充值按 ￥1 = $1 账户余额，所以实际相当于花费 ￥3.60。按官方汇率 $1 = ￥7 折算，约等于真实美元 $0.51，也就是官方价格 $5 的约 1 折。": "Because top-up is CNY 1 = $1 account balance, it is equivalent to spending CNY 3.60. Converted at the official exchange rate of $1 = CNY 7, that is about real USD $0.51, roughly 10% of the official $5 price.",
+    "简易公式：0.72人民币 = 1美元用量": "Simple formula: CNY 0.72 = $1 of usage",
     "，": ", ",
-    "、": ", "
+    "、": ", ",
+    "???{{modelName}} ?????? ${{officialPrice}} / M tokens?{{groupName}} ????? {{ratio}}x??????????": "Example: {{modelName}} input is officially ${{officialPrice}} / M tokens, and the {{groupName}} group multiplier is {{ratio}}x, so the actual account charge is:",
+    "????? ?1 = $1 ?????????????? ?{{accountCharge}}?????? $1 = ?7 ?????????? ${{realUsd}}???????? ${{officialPrice}} ?? {{discount}} ??": "Because top-up is CNY 1 = $1 account balance, it is equivalent to spending CNY {{accountCharge}}. Converted at the official exchange rate of $1 = CNY 7, that is about real USD ${{realUsd}}, roughly {{discount}}/10 of the official ${{officialPrice}} price.",
+    "?????{{ratio}}??? = 1????": "Simple formula: CNY {{ratio}} = $1 of usage"
   }
 }

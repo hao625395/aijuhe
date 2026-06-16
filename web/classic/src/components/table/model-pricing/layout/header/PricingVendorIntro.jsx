@@ -35,6 +35,8 @@ const CONFIG = {
   CAROUSEL_INTERVAL: 2000,
   ICON_SIZE: 40,
   UNKNOWN_VENDOR: 'unknown',
+  DEFAULT_PRICING_GROUP: 'Codex Pro (仅限 Codex)',
+  DEFAULT_PRICING_RATIO: 0.09,
 };
 
 const THEME_COLORS = {
@@ -135,6 +137,8 @@ const renderVendorAvatar = (vendor, t, isAllVendors = false) => {
 const PricingVendorIntro = memo(
   ({
     filterVendor,
+    filterGroup = 'all',
+    groupRatio = {},
     models = [],
     allModels = [],
     t,
@@ -231,6 +235,41 @@ const PricingVendorIntro = memo(
     }, [allModels, models, t]);
 
     const currentModelCount = models.length;
+    const pricingRuleData = useMemo(() => {
+      const effectiveGroup =
+        filterGroup === 'all' ? CONFIG.DEFAULT_PRICING_GROUP : filterGroup;
+      const groupName = effectiveGroup;
+      const parsedRatio = Number(groupRatio?.[effectiveGroup]);
+      const ratio =
+        Number.isFinite(parsedRatio)
+          ? parsedRatio
+          : filterGroup === 'all'
+            ? CONFIG.DEFAULT_PRICING_RATIO
+            : 1;
+      const pricingContext = `${groupName} ${filterVendor}`.toLowerCase();
+      const modelName = /claude|anthropic|opus/.test(pricingContext)
+        ? 'claude-opus-4-8'
+        : 'gpt-5.5';
+      const officialPrice = 5;
+      const accountCharge = officialPrice * ratio;
+      const realUsd = accountCharge / 7;
+      const discount = (realUsd / officialPrice) * 10;
+      const formatNumber = (value, digits = 2) =>
+        Number(value)
+          .toFixed(digits)
+          .replace(/\.?0+$/, '');
+      const formatMoney = (value) => Number(value).toFixed(2);
+
+      return {
+        groupName,
+        modelName,
+        officialPrice: formatNumber(officialPrice),
+        ratio: formatNumber(ratio),
+        accountCharge: formatMoney(accountCharge),
+        realUsd: formatMoney(realUsd),
+        discount: formatNumber(discount, 1),
+      };
+    }, [filterGroup, filterVendor, groupRatio, t]);
 
     useEffect(() => {
       if (filterVendor !== 'all' || vendorInfo.length <= 1) {
@@ -317,6 +356,47 @@ const PricingVendorIntro = memo(
       ],
     );
 
+    const renderPricingRulesNotice = useCallback(
+      () => (
+        <div className='mb-3 rounded-xl border border-amber-200 bg-amber-50/90 px-3 py-2 text-xs leading-relaxed text-slate-700 shadow-sm'>
+          <div className='mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-1'>
+            <span className='font-semibold text-slate-900'>
+              {t('计价规则')}
+            </span>
+            <span>
+              {t(
+                '官方价格默认按 $1 = ￥7 折算；本站充值按 ￥1 = $1 账户余额 入账，因此模型广场显示的 $ 为账户余额计价，并不等同于官方真实美元成本。',
+              )}
+            </span>
+          </div>
+          <div className='mb-1 flex flex-wrap items-center gap-x-3 gap-y-1'>
+            <span className='font-medium text-slate-900'>
+              {t('账户扣费 = 官方美元价格 × 分组倍率')}
+            </span>
+            <span>
+              {t(
+                '示例：{{modelName}} 输入价官方为 ${{officialPrice}} / M tokens，{{groupName}} 分组倍率为 {{ratio}}x，则账户实际扣费为：',
+                pricingRuleData,
+              )}
+            </span>
+            <span className='rounded-md border border-amber-200 bg-white/80 px-2 py-0.5 font-mono font-semibold text-slate-900'>
+              {`$${pricingRuleData.officialPrice} × ${pricingRuleData.ratio} = $${pricingRuleData.accountCharge} / M tokens`}
+            </span>
+          </div>
+          <div className='mb-1'>
+            {t(
+              '由于充值按 ￥1 = $1 账户余额，所以实际相当于花费 ￥{{accountCharge}}。按官方汇率 $1 = ￥7 折算，约等于真实美元 ${{realUsd}}，也就是官方价格 ${{officialPrice}} 的约 {{discount}} 折。',
+              pricingRuleData,
+            )}
+          </div>
+          <div className='font-medium text-slate-900'>
+            {t('简易公式：{{ratio}}人民币 = 1美元用量', pricingRuleData)}
+          </div>
+        </div>
+      ),
+      [pricingRuleData, t],
+    );
+
     const renderHeaderCard = useCallback(
       ({ title, count, description, rightContent, primaryDarkerChannel }) => (
         <Card
@@ -359,10 +439,17 @@ const PricingVendorIntro = memo(
             </div>
           }
         >
+          {renderPricingRulesNotice()}
           {renderSearchActions()}
         </Card>
       ),
-      [renderSearchActions, createCoverStyle, handleOpenDescModal, t],
+      [
+        renderSearchActions,
+        renderPricingRulesNotice,
+        createCoverStyle,
+        handleOpenDescModal,
+        t,
+      ],
     );
 
     const renderAllVendorsAvatar = useCallback(() => {
