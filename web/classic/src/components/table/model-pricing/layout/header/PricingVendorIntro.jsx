@@ -382,39 +382,122 @@ const PricingVendorIntro = memo(
 
     const renderPricingRulesNotice = useCallback(
       () => (
-        <div className='mb-3 rounded-xl border border-amber-200 bg-amber-50/90 px-3 py-2 text-xs leading-relaxed text-slate-700 shadow-sm'>
-          <div className='mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-1'>
-            <span className='font-semibold text-slate-900'>
-              {t('计价规则')}
-            </span>
-            <span>
-              {t(
-                '官方价格默认按 $1 = ￥7 折算；本站充值按 ￥1 = $1 账户余额 入账，因此模型广场显示的 $ 为账户余额计价，并不等同于官方真实美元成本。',
-              )}
-            </span>
-          </div>
-          <div className='mb-1 flex flex-wrap items-center gap-x-3 gap-y-1'>
-            <span className='font-medium text-slate-900'>
-              {t('账户扣费 = 官方美元价格 × 分组倍率')}
-            </span>
-            <span>
-              {t(
-                '示例：{{modelName}} 输入价官方为 ${{officialPrice}} / M tokens，{{groupName}} 分组倍率为 {{ratio}}x，则账户实际扣费为：',
-                pricingRuleData,
-              )}
-            </span>
-            <span className='rounded-md border border-amber-200 bg-white/80 px-2 py-0.5 font-mono font-semibold text-slate-900'>
-              {`$${pricingRuleData.officialPrice} × ${pricingRuleData.ratio} = $${pricingRuleData.accountCharge} / M tokens`}
-            </span>
-          </div>
-          <div className='mb-1'>
-            {t(
-              '由于充值按 ￥1 = $1 账户余额，所以实际相当于花费 ￥{{accountCharge}}。按官方汇率 $1 = ￥7 折算，约等于真实美元 ${{realUsd}}，也就是官方价格 ${{officialPrice}} 的约 {{discount}} 折。',
-              pricingRuleData,
-            )}
-          </div>
-          <div className='font-medium text-slate-900'>
-            {t('简易公式：{{ratio}}人民币 = 1美元用量', pricingRuleData)}
+        <div
+          className='mb-3 overflow-hidden rounded-xl text-xs leading-relaxed shadow-sm'
+          style={{
+            border: '1px solid #dbe3ef',
+            background:
+              'linear-gradient(135deg, #ffffff 0%, #f8fbff 55%, #eef6ff 100%)',
+            boxShadow: '0 8px 22px rgba(15, 23, 42, 0.06)',
+            color: '#334155',
+          }}
+        >
+          <div
+            className='grid gap-3 px-3 py-3 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start'
+            style={{ borderLeft: '4px solid #2563eb' }}
+          >
+            <div className='min-w-0 space-y-2'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <span
+                  className='rounded-md px-2 py-0.5 text-[11px] font-semibold shadow-sm'
+                  style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
+                >
+                  {t('计价规则')}
+                </span>
+                <span style={{ color: '#475569' }}>
+                  {t(
+                    '官方价格默认按 $1 = ￥7 折算；本站充值按 ￥1 = $1 账户余额 入账，因此模型广场显示的 $ 为账户余额计价，并不等同于官方真实美元成本。',
+                  )}
+                </span>
+              </div>
+              <div
+                className='rounded-lg px-3 py-2'
+                style={{
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: 'rgba(255,255,255,0.82)',
+                }}
+              >
+                <div
+                  className='mb-1 font-semibold'
+                  style={{ color: '#0f172a' }}
+                >
+                  {t('账户扣费 = 官方美元价格 × 分组倍率')}
+                </div>
+                <div style={{ color: '#475569' }}>
+                  {t(
+                    '示例：{{modelName}} 输入价官方为 ${{officialPrice}} / M tokens，{{groupName}} 分组倍率为 {{ratio}}x，则账户实际扣费为：',
+                    pricingRuleData,
+                  )}
+                  <span
+                    className='ml-1 font-mono font-semibold'
+                    style={{ color: '#0f172a' }}
+                  >
+                    {`$${pricingRuleData.officialPrice} × ${pricingRuleData.ratio} = $${pricingRuleData.accountCharge} / M tokens`}
+                  </span>
+                </div>
+              </div>
+              <div style={{ color: '#475569' }}>
+                {t(
+                  '由于充值按 ￥1 = $1 账户余额，所以实际相当于花费 ￥{{accountCharge}}。按官方汇率 $1 = ￥7 折算，约等于真实美元 ${{realUsd}}，也就是官方价格 ${{officialPrice}} 的约 {{discount}} 折。',
+                  pricingRuleData,
+                )}
+              </div>
+            </div>
+
+            <div
+              className='flex min-w-0 flex-col rounded-lg px-3 py-2 shadow-sm lg:self-start'
+              style={{
+                border: '1px solid #bfdbfe',
+                backgroundColor: 'rgba(255,255,255,0.94)',
+              }}
+            >
+              <div className='mb-1 flex items-center justify-between gap-2'>
+                <span
+                  className='min-w-0 flex-1 truncate text-[11px] font-semibold'
+                  style={{ color: '#64748b' }}
+                >
+                  {pricingRuleData.groupName}
+                </span>
+                <div className='flex shrink-0 items-center gap-1.5'>
+                  <span
+                    className='rounded-full px-2 py-0.5 text-[11px] font-semibold'
+                    style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}
+                  >
+                    {t('约 {{discount}} 折', pricingRuleData)}
+                  </span>
+                  <span
+                    className='rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold'
+                    style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}
+                  >
+                    {pricingRuleData.ratio}x
+                  </span>
+                </div>
+              </div>
+              <div
+                className='rounded-md px-3 py-2 text-center font-mono text-[12px] font-semibold shadow-inner'
+                style={{
+                  backgroundColor: '#0f172a',
+                  color: '#ffffff',
+                  boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.08)',
+                }}
+              >
+                {`$${pricingRuleData.officialPrice} × ${pricingRuleData.ratio} = $${pricingRuleData.accountCharge} / M tokens`}
+              </div>
+              <div
+                className='mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]'
+                style={{ color: '#64748b' }}
+              >
+                <span>
+                  {t('简易公式：{{ratio}}人民币 = 1美元用量', pricingRuleData)}
+                </span>
+                <span
+                  className='rounded-full px-2 py-0.5 font-medium'
+                  style={{ backgroundColor: '#ecfdf5', color: '#047857' }}
+                >
+                  ${pricingRuleData.realUsd}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       ),

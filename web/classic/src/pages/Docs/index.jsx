@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Toast, Spin } from '@douyinfe/semi-ui';
+import { Toast } from '@douyinfe/semi-ui';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -1013,8 +1013,20 @@ const Docs = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <Spin size="large" tip="正在读取文档数据..." />
+      <div className="flex items-center justify-center min-h-[500px] px-4">
+        <div
+          className="flex min-w-[180px] flex-col items-center justify-center gap-3 text-blue-600"
+          role="status"
+          aria-live="polite"
+        >
+          <span
+            className="h-8 w-8 animate-spin rounded-full border-blue-100 border-t-blue-600"
+            style={{ borderWidth: 3 }}
+          />
+          <span className="whitespace-nowrap text-sm font-medium leading-5">
+            正在读取文档数据...
+          </span>
+        </div>
       </div>
     );
   }
