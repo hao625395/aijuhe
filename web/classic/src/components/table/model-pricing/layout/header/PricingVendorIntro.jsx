@@ -272,7 +272,7 @@ const PricingVendorIntro = memo(
             : 1;
       const pricingContext = `${groupName} ${filterVendor}`.toLowerCase();
       const modelName = /claude|anthropic|opus/.test(pricingContext)
-        ? 'claude-opus-4-8'
+        ? 'co-4-8'
         : 'gpt-5.5';
       const officialPrice = 5;
       const accountCharge = officialPrice * ratio;
@@ -294,19 +294,6 @@ const PricingVendorIntro = memo(
         discount: formatNumber(discount, 1),
       };
     }, [filterGroup, filterVendor, groupRatio, t]);
-
-    useEffect(() => {
-      if (filterVendor !== 'all' || vendorInfo.length <= 1) {
-        setCurrentOffset(0);
-        return;
-      }
-
-      const interval = setInterval(() => {
-        setCurrentOffset((prev) => (prev + 1) % vendorInfo.length);
-      }, CONFIG.CAROUSEL_INTERVAL);
-
-      return () => clearInterval(interval);
-    }, [filterVendor, vendorInfo.length]);
 
     const getVendorDescription = useCallback(
       (vendorKey) => {
@@ -383,125 +370,97 @@ const PricingVendorIntro = memo(
     const renderPricingRulesNotice = useCallback(
       () => (
         <div
-          className='mb-3 overflow-hidden rounded-xl text-xs leading-relaxed shadow-sm'
+          className='mb-1.5 overflow-hidden rounded-md text-[11px] leading-5'
           style={{
-            border: '1px solid #dbe3ef',
-            background:
-              'linear-gradient(135deg, #ffffff 0%, #f8fbff 55%, #eef6ff 100%)',
-            boxShadow: '0 8px 22px rgba(15, 23, 42, 0.06)',
+            border: '1px solid #d7e2f1',
+            backgroundColor: '#f8fbff',
             color: '#334155',
           }}
         >
           <div
-            className='grid gap-3 px-3 py-3 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start'
+            className='flex flex-wrap items-center gap-x-2 gap-y-0.5 px-3 py-1.5'
             style={{ borderLeft: '4px solid #2563eb' }}
           >
-            <div className='min-w-0 space-y-2'>
-              <div className='flex flex-wrap items-center gap-2'>
-                <span
-                  className='rounded-md px-2 py-0.5 text-[11px] font-semibold shadow-sm'
-                  style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
-                >
-                  {t('计价规则')}
-                </span>
-                <span style={{ color: '#475569' }}>
-                  {t(
-                    '官方价格默认按 $1 = ￥7 折算；本站充值按 ￥1 = $1 账户余额 入账，因此模型广场显示的 $ 为账户余额计价，并不等同于官方真实美元成本。',
-                  )}
-                </span>
-              </div>
-              <div
-                className='rounded-lg px-3 py-2'
-                style={{
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: 'rgba(255,255,255,0.82)',
-                }}
-              >
-                <div
-                  className='mb-1 font-semibold'
-                  style={{ color: '#0f172a' }}
-                >
-                  {t('账户扣费 = 官方美元价格 × 分组倍率')}
-                </div>
-                <div style={{ color: '#475569' }}>
-                  {t(
-                    '示例：{{modelName}} 输入价官方为 ${{officialPrice}} / M tokens，{{groupName}} 分组倍率为 {{ratio}}x，则账户实际扣费为：',
-                    pricingRuleData,
-                  )}
-                  <span
-                    className='ml-1 font-mono font-semibold'
-                    style={{ color: '#0f172a' }}
-                  >
-                    {`$${pricingRuleData.officialPrice} × ${pricingRuleData.ratio} = $${pricingRuleData.accountCharge} / M tokens`}
-                  </span>
-                </div>
-              </div>
-              <div style={{ color: '#475569' }}>
+            <span
+              className='rounded-md px-2 py-0.5 text-[11px] font-semibold shadow-sm'
+              style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
+            >
+              {t('计价规则')}
+            </span>
+            <span className='min-w-0 flex-1' style={{ color: '#475569' }}>
+              <span className='font-semibold' style={{ color: '#0f172a' }}>
+                {t('账户扣费 = 官方美元价格 × 分组倍率。')}
+              </span>
+              <span className='ml-1'>
                 {t(
-                  '由于充值按 ￥1 = $1 账户余额，所以实际相当于花费 ￥{{accountCharge}}。按官方汇率 $1 = ￥7 折算，约等于真实美元 ${{realUsd}}，也就是官方价格 ${{officialPrice}} 的约 {{discount}} 折。',
+                  '示例：{{modelName}} 输入价官方 ${{officialPrice}}，本站账户扣费 ${{accountCharge}}，即实际花费 ￥{{accountCharge}}；本站充值按 ￥1 = $1 账户余额入账；按官方汇率折算真实美元约 ${{realUsd}}，约为官方价格 {{discount}} 折。',
                   pricingRuleData,
                 )}
-              </div>
-            </div>
-
-            <div
-              className='flex min-w-0 flex-col rounded-lg px-3 py-2 shadow-sm lg:self-start'
-              style={{
-                border: '1px solid #bfdbfe',
-                backgroundColor: 'rgba(255,255,255,0.94)',
-              }}
-            >
-              <div className='mb-1 flex items-center justify-between gap-2'>
-                <span
-                  className='min-w-0 flex-1 truncate text-[11px] font-semibold'
-                  style={{ color: '#64748b' }}
-                >
-                  {pricingRuleData.groupName}
-                </span>
-                <div className='flex shrink-0 items-center gap-1.5'>
-                  <span
-                    className='rounded-full px-2 py-0.5 text-[11px] font-semibold'
-                    style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}
-                  >
-                    {t('约 {{discount}} 折', pricingRuleData)}
-                  </span>
-                  <span
-                    className='rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold'
-                    style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}
-                  >
-                    {pricingRuleData.ratio}x
-                  </span>
-                </div>
-              </div>
-              <div
-                className='rounded-md px-3 py-2 text-center font-mono text-[12px] font-semibold shadow-inner'
-                style={{
-                  backgroundColor: '#0f172a',
-                  color: '#ffffff',
-                  boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.08)',
-                }}
-              >
-                {`$${pricingRuleData.officialPrice} × ${pricingRuleData.ratio} = $${pricingRuleData.accountCharge} / M tokens`}
-              </div>
-              <div
-                className='mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]'
-                style={{ color: '#64748b' }}
-              >
-                <span>
-                  {t('简易公式：{{ratio}}人民币 = 1美元用量', pricingRuleData)}
-                </span>
-                <span
-                  className='rounded-full px-2 py-0.5 font-medium'
-                  style={{ backgroundColor: '#ecfdf5', color: '#047857' }}
-                >
-                  ${pricingRuleData.realUsd}
-                </span>
-              </div>
-            </div>
+              </span>
+            </span>
           </div>
         </div>
       ),
       [pricingRuleData, t],
+    );
+
+    const renderPricingRulesHeaderCard = useCallback(
+      () => (
+        <div
+          className='flex h-full min-w-0 flex-col justify-between rounded-lg px-3.5 py-2 shadow-md backdrop-blur-sm'
+          style={{
+            width: isMobile ? 'min(72vw, 300px)' : 300,
+            border: '1px solid rgba(191,219,254,0.9)',
+            backgroundColor: 'rgba(255,255,255,0.94)',
+          }}
+        >
+          <div className='flex items-center justify-between gap-2 leading-none'>
+            <span
+              className='min-w-0 flex-1 truncate text-[11px] font-semibold'
+              style={{ color: '#334155' }}
+            >
+              {pricingRuleData.groupName}
+            </span>
+            <div className='flex shrink-0 items-center gap-1.5'>
+              <span
+                className='rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none'
+                style={{ backgroundColor: '#fff7ed', color: '#c2410c' }}
+              >
+                约{pricingRuleData.discount}折
+              </span>
+              <span
+                className='rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold leading-none'
+                style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}
+              >
+                {pricingRuleData.ratio}x
+              </span>
+            </div>
+          </div>
+          <div
+            className='flex min-h-7 items-center justify-center rounded px-3 py-1 text-center font-mono text-[12px] font-semibold leading-none shadow-inner'
+            style={{
+              backgroundColor: '#0f172a',
+              color: '#ffffff',
+              boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.08)',
+            }}
+          >
+            {`$${pricingRuleData.officialPrice} × ${pricingRuleData.ratio} = $${pricingRuleData.accountCharge} / M tokens`}
+          </div>
+          <div
+            className='flex items-center justify-between gap-2 text-[10px] leading-none'
+            style={{ color: '#64748b' }}
+          >
+            <span className='min-w-0 flex-1 truncate'>{`简易公式：${pricingRuleData.ratio}人民币 = 1美元用量`}</span>
+            <span
+              className='shrink-0 rounded-full px-2 py-0.5 font-medium leading-none'
+              style={{ backgroundColor: '#ecfdf5', color: '#047857' }}
+            >
+              ${pricingRuleData.realUsd}
+            </span>
+          </div>
+        </div>
+      ),
+      [isMobile, pricingRuleData],
     );
 
     const renderHeaderCard = useCallback(
@@ -510,11 +469,16 @@ const PricingVendorIntro = memo(
           className='!rounded-2xl shadow-sm border-0'
           cover={
             <div
-              className='relative h-full'
+              className='relative overflow-hidden'
               style={createCoverStyle(primaryDarkerChannel)}
             >
-              <div className='relative z-10 h-full flex items-center justify-between p-4'>
-                <div className='flex-1 min-w-0 mr-4'>
+              <div className='relative z-10 p-4'>
+                <div
+                  className='min-w-0'
+                  style={
+                    isMobile ? undefined : { maxWidth: 'calc(100% - 332px)' }
+                  }
+                >
                   <div className='flex flex-row flex-wrap items-center gap-2 sm:gap-3 mb-2'>
                     <h2
                       className='text-lg sm:text-xl font-bold truncate'
@@ -540,8 +504,9 @@ const PricingVendorIntro = memo(
                     {description}
                   </Paragraph>
                 </div>
-
-                <div className='flex-shrink-0'>{rightContent}</div>
+              </div>
+              <div className='absolute bottom-0 right-4 top-0 z-20'>
+                {rightContent}
               </div>
             </div>
           }
@@ -555,9 +520,23 @@ const PricingVendorIntro = memo(
         renderPricingRulesNotice,
         createCoverStyle,
         handleOpenDescModal,
+        isMobile,
         t,
       ],
     );
+
+    useEffect(() => {
+      if (filterVendor !== 'all' || vendorInfo.length <= 1) {
+        setCurrentOffset(0);
+        return undefined;
+      }
+
+      const interval = setInterval(() => {
+        setCurrentOffset((prev) => (prev + 1) % vendorInfo.length);
+      }, CONFIG.CAROUSEL_INTERVAL);
+
+      return () => clearInterval(interval);
+    }, [filterVendor, vendorInfo.length]);
 
     const renderAllVendorsAvatar = useCallback(() => {
       const currentVendor =
@@ -572,7 +551,7 @@ const PricingVendorIntro = memo(
         title: t('全部供应商'),
         count: currentModelCount,
         description: getVendorDescription('all'),
-        rightContent: renderAllVendorsAvatar(),
+        rightContent: renderPricingRulesHeaderCard(),
         primaryDarkerChannel: THEME_COLORS.allVendors.primary,
       });
       return (
@@ -595,7 +574,7 @@ const PricingVendorIntro = memo(
       count: currentModelCount,
       description:
         currentVendor.description || getVendorDescription(currentVendor.name),
-      rightContent: renderVendorAvatar(currentVendor, t, false),
+      rightContent: renderPricingRulesHeaderCard(),
       primaryDarkerChannel: THEME_COLORS.specific.primary,
     });
 
