@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import DocsLink from '../../common/DocsLink';
 import SkeletonWrapper from '../components/SkeletonWrapper';
 
 const Navigation = ({
@@ -73,10 +74,12 @@ const Navigation = ({
 
       const linkClasses = `${baseClasses} ${spacingClasses} ${activeClasses}`;
 
+      const LinkComponent = targetPath.startsWith('/docs') ? DocsLink : Link;
+
       return (
-        <Link key={link.itemKey} to={targetPath} className={linkClasses}>
+        <LinkComponent key={link.itemKey} to={targetPath} className={linkClasses}>
           {linkContent}
-        </Link>
+        </LinkComponent>
       );
     });
   };

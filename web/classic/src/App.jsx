@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { lazy, Suspense, useContext, useMemo } from 'react';
+import React, { lazy, Suspense, useContext, useEffect, useMemo } from 'react';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import Loading from './components/common/ui/Loading';
 import User from './pages/User';
@@ -49,11 +49,13 @@ import OAuth2Callback from './components/auth/OAuth2Callback';
 import PersonalSetting from './components/settings/PersonalSetting';
 import Setup from './pages/Setup';
 import SetupCheck from './components/layout/SetupCheck';
+import { preloadDocsData } from './services/docsData';
 
 const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const About = lazy(() => import('./pages/About'));
-const Docs = lazy(() => import('./pages/Docs'));
+const loadDocsPage = () => import('./pages/Docs');
+const Docs = lazy(loadDocsPage);
 const UserAgreement = lazy(() => import('./pages/UserAgreement'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const LegalDocument = lazy(() => import('./pages/LegalDocument'));
@@ -66,6 +68,11 @@ function DynamicOAuth2Callback() {
 function App() {
   const location = useLocation();
   const [statusState] = useContext(StatusContext);
+
+  useEffect(() => {
+    loadDocsPage();
+    preloadDocsData().catch(() => {});
+  }, []);
 
   // 获取模型广场权限配置
   const pricingRequireAuth = useMemo(() => {

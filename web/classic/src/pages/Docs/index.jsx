@@ -22,6 +22,11 @@ import { useLocation } from 'react-router-dom';
 import { Toast } from '@douyinfe/semi-ui';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import {
+  getCachedDocsData,
+  getInitialDocId,
+  preloadDocsData,
+} from '../../services/docsData';
 
 const AIJUHE_ENDPOINTS = ['https://aijuhe.fun', 'https://aijuhe.fun/v1'];
 const DOC_ENDPOINT_OVERRIDES = {
@@ -960,10 +965,13 @@ const AgentMerchantView = ({ setActiveDocId }) => {
 };
 
 const Docs = () => {
-  const [docs, setDocs] = useState([]);
-  const [activeDocId, setActiveDocId] = useState(null);
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const cachedDocs = getCachedDocsData();
+  const [docs, setDocs] = useState(() => cachedDocs || []);
+  const [activeDocId, setActiveDocId] = useState(() =>
+    getInitialDocId(cachedDocs, window.location.search),
+  );
+  const [loading, setLoading] = useState(() => !cachedDocs?.length);
 
   useEffect(() => {
     document.body.classList.add('docs-theme-route');
@@ -972,37 +980,37 @@ const Docs = () => {
 
   useEffect(() => {
     // 异步加载飞书文档的 Markdown 数据包
-    fetch('/docs-data.json?t=' + Date.now())
-      .then((res) => res.json())
+    const cached = getCachedDocsData();
+    if (cached && cached.length > 0) {
+      setDocs(cached);
+      setActiveDocId(getInitialDocId(cached, window.location.search));
+      setLoading(false);
+      return undefined;
+    }
+
+    let ignore = false;
+    preloadDocsData()
       .then((data) => {
+        if (ignore) return;
         setDocs(data);
-        if (data && data.length > 0) {
-          const urlParams = new URLSearchParams(window.location.search);
-          const idParam = urlParams.get('id');
-          if (idParam && data.some(d => d.id === idParam)) {
-            setActiveDocId(idParam);
-          } else {
-            setActiveDocId(data[0].id);
-          }
-        }
+        setActiveDocId(getInitialDocId(data, window.location.search));
         setLoading(false);
       })
       .catch((err) => {
+        if (ignore) return;
         console.error('加载文档失败:', err);
         Toast.error('加载文档失败，请稍后刷新重试');
         setLoading(false);
       });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   useEffect(() => {
     if (docs && docs.length > 0) {
-      const urlParams = new URLSearchParams(location.search);
-      const idParam = urlParams.get('id');
-      if (idParam && docs.some(d => d.id === idParam)) {
-        setActiveDocId(idParam);
-      } else {
-        setActiveDocId(docs[0].id);
-      }
+      setActiveDocId(getInitialDocId(docs, location.search));
     }
   }, [location, docs]);
 

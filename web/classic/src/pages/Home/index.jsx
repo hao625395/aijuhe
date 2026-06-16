@@ -36,6 +36,7 @@ import {
 } from '@douyinfe/semi-icons';
 import { Link } from 'react-router-dom';
 import NoticeModal from '../../components/layout/NoticeModal';
+import DocsLink from '../../components/common/DocsLink';
 import {
   Moonshot,
   OpenAI,
@@ -442,11 +443,11 @@ const Home = () => {
                 <p className='text-xs text-[#6E6352] leading-relaxed mb-6'>
                   {t('选择你常用的编程 Agent。我们会整理主流工具的下载入口和适用场景。')}
                 </p>
-                <Link to='/docs?id=JhscwRK5tioqwOkk9RkcmBzTnxe' className='w-full mt-auto'>
+                <DocsLink to='/docs?id=JhscwRK5tioqwOkk9RkcmBzTnxe' className='w-full mt-auto'>
                   <button className='w-full py-2.5 px-4 rounded-xl bg-[#8C6239] hover:bg-[#724F2C] text-xs font-semibold text-white transition-all text-center cursor-pointer'>
                     {t('查看 Agent 列表 →')}
                   </button>
-                </Link>
+                </DocsLink>
               </div>
 
               <div className='bg-white rounded-2xl border border-[#BCA895] p-6 shadow-sm hover:shadow-md hover:border-[#8C6239] transition-all flex flex-col min-h-[240px]'>
@@ -458,11 +459,11 @@ const Home = () => {
                 <p className='text-xs text-[#6E6352] leading-relaxed mb-6'>
                   {t('推荐使用 cc switch 管理配置。查看CC Switch 配置各个Agent的教程文档。')}
                 </p>
-                <Link to='/docs?id=I6obw07QmiXRh4kMLY0cdbimnQe' className='w-full mt-auto'>
+                <DocsLink to='/docs?id=I6obw07QmiXRh4kMLY0cdbimnQe' className='w-full mt-auto'>
                   <button className='w-full py-2.5 px-4 rounded-xl bg-[#8C6239] hover:bg-[#724F2C] text-xs font-semibold text-white transition-all text-center cursor-pointer'>
                     {t('查看配置教程 →')}
                   </button>
-                </Link>
+                </DocsLink>
               </div>
 
               <div className='bg-white rounded-2xl border border-[#BCA895] p-6 shadow-sm hover:shadow-md hover:border-[#8C6239] transition-all flex flex-col min-h-[240px]'>

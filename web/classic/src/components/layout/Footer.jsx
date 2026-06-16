@@ -23,6 +23,7 @@ import { Typography, Toast } from '@douyinfe/semi-ui';
 import { Link } from 'react-router-dom';
 import { getFooterHTML, getLogo, getSystemName } from '../../helpers';
 import { StatusContext } from '../../context/Status';
+import DocsLink from '../common/DocsLink';
 
 const FooterBar = () => {
   const { t } = useTranslation();
@@ -111,36 +112,36 @@ const FooterBar = () => {
               <p className='text-black dark:text-white mb-4 text-sm font-semibold'>{t('帮助与支持')}</p>
               <ul className='space-y-3 text-sm list-none p-0 m-0'>
                 <li>
-                  <Link
+                  <DocsLink
                     to='/docs'
                     className='text-gray-500 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors no-underline'
                   >
                     {t('使用教程')}
-                  </Link>
+                  </DocsLink>
                 </li>
                 <li>
-                  <Link
+                  <DocsLink
                     to='/docs'
                     className='text-gray-500 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors no-underline'
                   >
                     {t('API 文档')}
-                  </Link>
+                  </DocsLink>
                 </li>
                 <li>
-                  <a
-                    href='/docs?id=contact-customer-service'
+                  <DocsLink
+                    to='/docs?id=contact-customer-service'
                     className='text-gray-500 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors no-underline'
                   >
                     {t('联系我们')}
-                  </a>
+                  </DocsLink>
                 </li>
                 <li>
-                  <a
-                    href='/docs?id=agent-merchant'
+                  <DocsLink
+                    to='/docs?id=agent-merchant'
                     className='text-gray-500 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors no-underline'
                   >
                     {t('代理加盟')}
-                  </a>
+                  </DocsLink>
                 </li>
               </ul>
             </div>
