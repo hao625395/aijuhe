@@ -1012,23 +1012,7 @@ const Docs = () => {
   }, [activeDocId]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[500px] px-4">
-        <div
-          className="flex min-w-[180px] flex-col items-center justify-center gap-3 text-blue-600"
-          role="status"
-          aria-live="polite"
-        >
-          <span
-            className="h-8 w-8 animate-spin rounded-full border-blue-100 border-t-blue-600"
-            style={{ borderWidth: 3 }}
-          />
-          <span className="whitespace-nowrap text-sm font-medium leading-5">
-            正在读取文档数据...
-          </span>
-        </div>
-      </div>
-    );
+    return <div className="min-h-[500px]" aria-hidden="true" />;
   }
 
   // 整理数据，按大分类分组

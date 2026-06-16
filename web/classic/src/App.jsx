@@ -347,7 +347,7 @@ function App() {
         <Route
           path='/docs'
           element={
-            <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+            <Suspense fallback={null} key={location.pathname}>
               <Docs />
             </Suspense>
           }
