@@ -17,8 +17,9 @@ import (
 	"github.com/QuantumNous/new-api/relay/channel/moonshot"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/relay/helper"
-	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/QuantumNous/new-api/types"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
@@ -170,38 +171,34 @@ func buildOpenAIModel(modelName string, ownerByModel map[string]string) dto.Open
 }
 
 type modelListGroups struct {
-	userGroup   string
 	tokenGroup  string
 	ownerGroups []string
 }
 
 func getModelListGroups(c *gin.Context) (modelListGroups, error) {
 	tokenGroup := common.GetContextKeyString(c, constant.ContextKeyTokenGroup)
-	userGroup := common.GetContextKeyString(c, constant.ContextKeyUserGroup)
-	if userGroup == "" && (tokenGroup == "" || tokenGroup == "auto") {
-		var err error
-		userGroup, err = model.GetUserGroup(c.GetInt("id"), false)
-		if err != nil {
-			return modelListGroups{}, err
-		}
-	}
 
 	if tokenGroup == "auto" {
+		ownerGroups := setting.GetAutoGroups()
+		if len(ownerGroups) == 0 {
+			ownerGroups = lo.Keys(ratio_setting.GetGroupRatioCopy())
+		}
 		return modelListGroups{
-			userGroup:   userGroup,
 			tokenGroup:  tokenGroup,
-			ownerGroups: service.GetUserAutoGroup(userGroup),
+			ownerGroups: ownerGroups,
 		}, nil
 	}
 
-	group := userGroup
 	if tokenGroup != "" {
-		group = tokenGroup
+		return modelListGroups{
+			tokenGroup:  tokenGroup,
+			ownerGroups: []string{tokenGroup},
+		}, nil
 	}
+
 	return modelListGroups{
-		userGroup:   userGroup,
 		tokenGroup:  tokenGroup,
-		ownerGroups: []string{group},
+		ownerGroups: lo.Keys(ratio_setting.GetGroupRatioCopy()),
 	}, nil
 }
 

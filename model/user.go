@@ -18,6 +18,7 @@ import (
 )
 
 const UserNameMaxLength = 20
+const DefaultCustomerGroup = "普通用户"
 
 // User if you add sensitive fields, don't forget to clean them in setupLogin function.
 // Otherwise, the sensitive information will be saved on local storage in plain text!
@@ -386,6 +387,9 @@ func (user *User) Insert(inviterId int) error {
 		}
 	}
 	user.Quota = common.QuotaForNewUser
+	if strings.TrimSpace(user.Group) == "" || user.Group == "default" {
+		user.Group = DefaultCustomerGroup
+	}
 	//user.SetAccessToken(common.GetUUID())
 	user.AffCode = common.GetRandomString(4)
 
@@ -445,6 +449,9 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 		}
 	}
 	user.Quota = common.QuotaForNewUser
+	if strings.TrimSpace(user.Group) == "" || user.Group == "default" {
+		user.Group = DefaultCustomerGroup
+	}
 	user.AffCode = common.GetRandomString(4)
 
 	// 初始化用户设置
@@ -527,14 +534,24 @@ func (user *User) Edit(updatePassword bool) error {
 		"remark":              newUser.Remark,
 		"aff_commission_rate": newUser.AffCommissionRate,
 	}
+	if newUser.Setting != "" {
+		updates["setting"] = newUser.Setting
+	}
 	if updatePassword {
 		updates["password"] = newUser.Password
 	}
 
-	DB.First(&user, user.Id)
-	if err = DB.Model(user).Updates(updates).Error; err != nil {
+	currentUser := &User{}
+	if err = DB.First(currentUser, user.Id).Error; err != nil {
 		return err
 	}
+	if err = DB.Model(currentUser).Updates(updates).Error; err != nil {
+		return err
+	}
+	if err = DB.First(currentUser, user.Id).Error; err != nil {
+		return err
+	}
+	*user = *currentUser
 
 	// Update cache
 	return updateUserCache(*user)

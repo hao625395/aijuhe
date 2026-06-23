@@ -57,6 +57,11 @@ import {
   IconEdit,
 } from '@douyinfe/semi-icons';
 import UserBindingManagementModal from './UserBindingManagementModal';
+import CustomerGroupRatioEditor from './CustomerGroupRatioEditor';
+import {
+  CUSTOMER_GROUPS,
+  DEFAULT_CUSTOMER_GROUP,
+} from '../../../../constants/customerGroups';
 
 const { Text, Title } = Typography;
 
@@ -70,7 +75,7 @@ const EditUserModal = (props) => {
   const [adjustMode, setAdjustMode] = useState('add');
   const [adjustLoading, setAdjustLoading] = useState(false);
   const isMobile = useIsMobile();
-  const [groupOptions, setGroupOptions] = useState([]);
+  const groupOptions = CUSTOMER_GROUPS;
   const [bindingModalVisible, setBindingModalVisible] = useState(false);
   const formApiRef = useRef(null);
   const [showAdjustQuotaRaw, setShowAdjustQuotaRaw] = useState(false);
@@ -93,18 +98,9 @@ const EditUserModal = (props) => {
     quota: 0,
     quota_amount: 0,
     aff_commission_rate_percent: 0,
-    group: 'default',
+    group: DEFAULT_CUSTOMER_GROUP,
     remark: '',
   });
-
-  const fetchGroups = async () => {
-    try {
-      let res = await API.get(`/api/group/`);
-      setGroupOptions(res.data.data.map((g) => ({ label: g, value: g })));
-    } catch (e) {
-      showError(e.message);
-    }
-  };
 
   const handleCancel = () => props.handleClose();
 
@@ -136,7 +132,6 @@ const EditUserModal = (props) => {
 
   useEffect(() => {
     loadUser();
-    if (userId) fetchGroups();
     setBindingModalVisible(false);
   }, [props.editingUser.id]);
 
@@ -246,7 +241,7 @@ const EditUserModal = (props) => {
         }
         bodyStyle={{ padding: 0 }}
         visible={props.visible}
-        width={isMobile ? '100%' : 600}
+        width={isMobile ? '100%' : 760}
         footer={
           <div className='flex justify-end bg-white'>
             <Space>
@@ -369,8 +364,6 @@ const EditUserModal = (props) => {
                           label={t('分组')}
                           placeholder={t('请选择分组')}
                           optionList={groupOptions}
-                          allowAdditions
-                          search
                           rules={[{ required: true, message: t('请选择分组') }]}
                         />
                       </Col>
@@ -438,6 +431,13 @@ const EditUserModal = (props) => {
                 )}
 
                 {/* 绑定信息入口 */}
+                {userId && (
+                  <CustomerGroupRatioEditor
+                    userId={userId}
+                    onSaved={loadUser}
+                  />
+                )}
+
                 {userId && (
                   <Card className='!rounded-2xl shadow-sm border-0'>
                     <div className='flex items-center justify-between gap-3'>

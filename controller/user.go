@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,9 +16,9 @@ import (
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
-	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/QuantumNous/new-api/constant"
 
@@ -182,6 +183,7 @@ func Register(c *gin.Context) {
 		DisplayName: user.Username,
 		InviterId:   inviterId,
 		Role:        common.RoleCommonUser, // 明确设置角色为普通用户
+		Group:       model.DefaultCustomerGroup,
 	}
 	if common.EmailVerificationEnabled {
 		cleanUser.Email = user.Email
@@ -548,18 +550,8 @@ func generateDefaultSidebarConfig(userRole int) string {
 }
 
 func GetUserModels(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		id = c.GetInt("id")
-	}
-	user, err := model.GetUserCache(id)
-	if err != nil {
-		common.ApiError(c, err)
-		return
-	}
-	groups := service.GetUserUsableGroups(user.Group)
 	var models []string
-	for group := range groups {
+	for group := range ratio_setting.GetGroupRatioCopy() {
 		for _, g := range model.GetGroupEnabledModels(group) {
 			if !common.StringsContains(models, g) {
 				models = append(models, g)
@@ -575,22 +567,59 @@ func GetUserModels(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
+	var requestData map[string]interface{}
+	body, err := c.GetRawData()
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+	if err := common.Unmarshal(body, &requestData); err != nil {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
 	var updatedUser model.User
-	err := json.NewDecoder(c.Request.Body).Decode(&updatedUser)
+	err = common.DecodeJson(bytes.NewReader(body), &updatedUser)
 	if err != nil || updatedUser.Id == 0 {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
+	}
+	originUser, err := model.GetUserById(updatedUser.Id, false)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if _, ok := requestData["username"]; !ok {
+		updatedUser.Username = originUser.Username
+	}
+	if _, ok := requestData["display_name"]; !ok {
+		updatedUser.DisplayName = originUser.DisplayName
+	}
+	if _, ok := requestData["group"]; !ok {
+		updatedUser.Group = originUser.Group
+	}
+	if _, ok := requestData["remark"]; !ok {
+		updatedUser.Remark = originUser.Remark
+	}
+	if _, ok := requestData["aff_commission_rate"]; !ok {
+		updatedUser.AffCommissionRate = originUser.AffCommissionRate
+	}
+	if _, ok := requestData["role"]; !ok {
+		updatedUser.Role = originUser.Role
+	}
+	if _, ok := requestData["status"]; !ok {
+		updatedUser.Status = originUser.Status
+	}
+	if _, ok := requestData["email"]; !ok {
+		updatedUser.Email = originUser.Email
+	}
+	if _, ok := requestData["setting"]; !ok {
+		updatedUser.Setting = originUser.Setting
 	}
 	if updatedUser.Password == "" {
 		updatedUser.Password = "$I_LOVE_U" // make Validator happy :)
 	}
 	if err := common.Validate.Struct(&updatedUser); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgUserInputInvalid, map[string]any{"Error": err.Error()})
-		return
-	}
-	originUser, err := model.GetUserById(updatedUser.Id, false)
-	if err != nil {
-		common.ApiError(c, err)
 		return
 	}
 	myRole := c.GetInt("role")
@@ -862,6 +891,7 @@ func CreateUser(c *gin.Context) {
 		Password:    user.Password,
 		DisplayName: user.DisplayName,
 		Role:        user.Role, // 保持管理员设置的角色
+		Group:       model.DefaultCustomerGroup,
 	}
 	if err := cleanUser.Insert(0); err != nil {
 		common.ApiError(c, err)

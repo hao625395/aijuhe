@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { API, showError, showSuccess } from '../../helpers';
 import { ITEMS_PER_PAGE } from '../../constants';
 import { useTableCompactMode } from '../common/useTableCompactMode';
+import { CUSTOMER_GROUPS } from '../../constants/customerGroups';
 
 export const useUsersData = () => {
   const { t } = useTranslation();
@@ -33,7 +34,7 @@ export const useUsersData = () => {
   const [activePage, setActivePage] = useState(1);
   const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
   const [searching, setSearching] = useState(false);
-  const [groupOptions, setGroupOptions] = useState([]);
+  const [groupOptions] = useState(CUSTOMER_GROUPS);
   const [userCount, setUserCount] = useState(0);
 
   // Modal states
@@ -234,24 +235,6 @@ export const useUsersData = () => {
     }
   };
 
-  // Fetch groups data
-  const fetchGroups = async () => {
-    try {
-      let res = await API.get(`/api/group/`);
-      if (res === undefined) {
-        return;
-      }
-      setGroupOptions(
-        res.data.data.map((group) => ({
-          label: group,
-          value: group,
-        })),
-      );
-    } catch (error) {
-      showError(error.message);
-    }
-  };
-
   // Modal control functions
   const closeAddUser = () => {
     setShowAddUser(false);
@@ -271,7 +254,6 @@ export const useUsersData = () => {
       .catch((reason) => {
         showError(reason);
       });
-    fetchGroups().then();
   }, []);
 
   return {

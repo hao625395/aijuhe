@@ -17,15 +17,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
-import { Tooltip, Typography } from '@douyinfe/semi-ui';
-import { Copy, Key, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Button, Tooltip, Typography } from '@douyinfe/semi-ui';
+import { CircleHelp, Copy, Key } from 'lucide-react';
 import CompactModeToggle from '../../common/ui/CompactModeToggle';
 import { copy, showError, showSuccess } from '../../../helpers';
+import TokenCreateGuideModal from './modals/TokenCreateGuideModal';
 
 const { Text } = Typography;
 
 const TokensDescription = ({ compactMode, setCompactMode, t }) => {
+  const [guideVisible, setGuideVisible] = useState(false);
   const endpoints = [
     {
       label: 'Codex API 端点',
@@ -54,6 +56,16 @@ const TokensDescription = ({ compactMode, setCompactMode, t }) => {
         <div className='flex items-center text-blue-500 shrink-0'>
           <Key size={16} className='mr-2' />
           <Text>{t('令牌管理')}</Text>
+          <Button
+            className='ml-3 !rounded-full'
+            size='small'
+            theme='light'
+            type='primary'
+            icon={<CircleHelp size={14} />}
+            onClick={() => setGuideVisible(true)}
+          >
+            {t('创建引导')}
+          </Button>
         </div>
 
         <div className='flex flex-wrap items-center gap-2 min-w-0 flex-1 lg:justify-center'>
@@ -70,28 +82,16 @@ const TokensDescription = ({ compactMode, setCompactMode, t }) => {
               onClick={() => handleCopyEndpoint(endpoint)}
             >
               <span className='shrink-0 font-medium'>{endpoint.label}</span>
-              {endpoint.isDefault && (
-                <span
-                  className='shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none'
-                  style={{ backgroundColor: '#ffedd5', color: '#ea580c' }}
-                >
-                  {t('默认')}
-                </span>
-              )}
               <span
                 className='h-3 w-px shrink-0'
                 style={{ backgroundColor: '#cbd5e1' }}
               />
-              <span className='min-w-0 truncate font-mono'>
-                {endpoint.value}
-              </span>
               <Tooltip content={t('点击复制此端点')} position='top'>
-                <Copy
-                  size={13}
-                  className='shrink-0 opacity-60 transition-opacity group-hover:opacity-100'
-                />
+                <span className='min-w-0 truncate font-mono'>
+                  {endpoint.value}
+                </span>
               </Tooltip>
-              <Zap
+              <Copy
                 size={13}
                 className='shrink-0 opacity-60 transition-opacity group-hover:opacity-100'
               />
@@ -105,6 +105,10 @@ const TokensDescription = ({ compactMode, setCompactMode, t }) => {
           t={t}
         />
       </div>
+      <TokenCreateGuideModal
+        visible={guideVisible}
+        onClose={() => setGuideVisible(false)}
+      />
     </div>
   );
 };
