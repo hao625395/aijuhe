@@ -1,0 +1,4 @@
+interface:
+  display_name: "站点生图"
+  short_description: "通过你的站点 OpenAI 兼容 /v1 接口流式生成或编辑图片。"
+  default_prompt: "使用当前站点 API Key 和站点 /v1 base URL，调用 gpt-image-2 生成或编辑图片。"

@@ -811,7 +811,7 @@ const Docs: React.FC = () => {
       return
     }
 
-    fetch('/docs-data.json', { cache: 'force-cache' })
+    fetch('/docs-data.json?v=20260628-image-skill', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data: DocItem[]) => {
         docsDataCache = data

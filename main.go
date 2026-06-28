@@ -47,6 +47,9 @@ var classicBuildFS embed.FS
 //go:embed web/classic/dist/index.html
 var classicIndexPage []byte
 
+//go:embed install/skill/image-gen
+var skillInstallFS embed.FS
+
 func main() {
 	startTime := time.Now()
 
@@ -195,6 +198,7 @@ func main() {
 		DefaultIndexPage: indexPage,
 		ClassicBuildFS:   classicBuildFS,
 		ClassicIndexPage: classicIndexPage,
+		SkillInstallFS:   skillInstallFS,
 	})
 	var port = os.Getenv("PORT")
 	if port == "" {

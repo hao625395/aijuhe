@@ -19,6 +19,7 @@ type ThemeAssets struct {
 	DefaultIndexPage []byte
 	ClassicBuildFS   embed.FS
 	ClassicIndexPage []byte
+	SkillInstallFS   embed.FS
 }
 
 func SetWebRouter(router *gin.Engine, assets ThemeAssets) {
