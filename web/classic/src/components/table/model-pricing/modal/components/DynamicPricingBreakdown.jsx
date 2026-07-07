@@ -62,6 +62,23 @@ function formatConditionSummary(conditions, t) {
     .join(' && ');
 }
 
+function getTierSortValue(label) {
+  const match = String(label || '').match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
+}
+
+function compareTierLabel(a, b) {
+  const aValue = getTierSortValue(a.label);
+  const bValue = getTierSortValue(b.label);
+  if (Number.isFinite(aValue) && Number.isFinite(bValue) && aValue !== bValue) {
+    return aValue - bValue;
+  }
+  return String(a.label || '').localeCompare(String(b.label || ''), undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+}
+
 
 function describeCondition(cond, t) {
   if (cond.source === SOURCE_TIME) {
@@ -114,6 +131,10 @@ export default function DynamicPricingBreakdown({ billingExpr, t }) {
   }
 
   const priceFields = BILLING_PRICING_VARS.map((v) => [v.field, v.shortLabel]);
+  const hasFixedPrices = hasTiers && tiers.some((tier) => {
+    const value = Number(tier.fixedPrice);
+    return Number.isFinite(value) && value > 0;
+  });
 
   const tierColumns = [
     {
@@ -128,6 +149,15 @@ export default function DynamicPricingBreakdown({ billingExpr, t }) {
         </div>
       ),
     },
+    ...(hasFixedPrices
+      ? [
+          {
+            title: t('价格'),
+            dataIndex: 'fixedPrice',
+            render: (v) => v > 0 ? <Text strong>{`${symbol}${(v * rate).toFixed(4)}`}</Text> : '-',
+          },
+        ]
+      : []),
     ...priceFields
       .filter(([field]) => hasTiers && tiers.some((tier) => tier[field] > 0))
       .map(([field, label]) => ({
@@ -138,10 +168,11 @@ export default function DynamicPricingBreakdown({ billingExpr, t }) {
   ];
 
   const tierData = hasTiers
-    ? tiers.map((tier, i) => ({
+    ? [...tiers].sort(compareTierLabel).map((tier, i) => ({
         key: `tier-${i}`,
         label: tier.label,
         condSummary: formatConditionSummary(tier.conditions, t),
+        fixedPrice: tier.fixedPrice || 0,
         ...Object.fromEntries(priceFields.map(([field]) => [field, tier[field] || 0])),
       }))
     : [];

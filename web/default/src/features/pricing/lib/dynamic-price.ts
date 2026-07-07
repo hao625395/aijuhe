@@ -46,6 +46,13 @@ export type DynamicPriceEntry = {
   variable: BillingVar
 }
 
+export type DynamicFixedPriceEntry = {
+  key: string
+  label: string
+  value: number
+  formatted: string
+}
+
 export type DynamicPricingSummary = {
   tiers: ParsedTier[]
   tier: ParsedTier | null
@@ -56,6 +63,7 @@ export type DynamicPricingSummary = {
   entries: DynamicPriceEntry[]
   primaryEntries: DynamicPriceEntry[]
   secondaryEntries: DynamicPriceEntry[]
+  fixedEntries: DynamicFixedPriceEntry[]
 }
 
 const PRIMARY_DYNAMIC_FIELDS = new Set(['inputPrice', 'outputPrice'])
@@ -114,6 +122,27 @@ export function formatDynamicUnitPrice(
   })
 }
 
+export function formatDynamicFixedPrice(
+  valueUSD: number,
+  options: DynamicPriceOptions
+): string {
+  const groupRatio = options.groupRatioMultiplier ?? 1
+  const priceRate = options.priceRate ?? 1
+  const usdExchangeRate = options.usdExchangeRate ?? 1
+  const displayPrice = applyRechargeRate(
+    valueUSD * groupRatio,
+    options.showRechargePrice ?? false,
+    priceRate,
+    usdExchangeRate
+  )
+
+  return formatBillingCurrencyFromUSD(displayPrice, {
+    digitsLarge: 4,
+    digitsSmall: 6,
+    abbreviate: false,
+  })
+}
+
 export function getDynamicPricingTiers(model: PricingModel): ParsedTier[] {
   if (!isDynamicPricingModel(model)) return []
   const { billingExpr } = splitBillingExprAndRequestRules(
@@ -160,6 +189,36 @@ export function getDynamicPriceEntries(
   })
 }
 
+function compareTierLabels(a: string, b: string): number {
+  const aNum = Number.parseFloat(a)
+  const bNum = Number.parseFloat(b)
+  if (Number.isFinite(aNum) && Number.isFinite(bNum) && aNum !== bNum) {
+    return aNum - bNum
+  }
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+}
+
+export function getDynamicFixedPriceEntries(
+  tiers: ParsedTier[],
+  options: DynamicPriceOptions
+): DynamicFixedPriceEntry[] {
+  return tiers
+    .flatMap((tier, index) => {
+      const value = Number(tier.fixedPrice)
+      if (!Number.isFinite(value) || value <= 0) return []
+      const label = tier.label || `#${index + 1}`
+      return [
+        {
+          key: `${label}-${index}`,
+          label,
+          value,
+          formatted: formatDynamicFixedPrice(value, options),
+        },
+      ]
+    })
+    .sort((a, b) => compareTierLabels(a.label, b.label))
+}
+
 export function getDynamicPricingSummary(
   model: PricingModel,
   options: DynamicPriceOptions
@@ -169,6 +228,7 @@ export function getDynamicPricingSummary(
   const tiers = getDynamicPricingTiers(model)
   const tier = tiers[0] || null
   const entries = getDynamicPriceEntries(tier, options)
+  const fixedEntries = getDynamicFixedPriceEntries(tiers, options)
   const rawExpression = model.billing_expr || ''
 
   return {
@@ -185,5 +245,6 @@ export function getDynamicPricingSummary(
     secondaryEntries: entries.filter(
       (entry) => !PRIMARY_DYNAMIC_FIELDS.has(entry.field)
     ),
+    fixedEntries,
   }
 }

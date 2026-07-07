@@ -122,14 +122,15 @@ const EndpointBox = ({ value, note }) => (
   </span>
 );
 
-const FloatingLinkButton = ({ href, label }) => {
+const FloatingLinkButton = ({ href, label, download }) => {
   const isInternalLink = typeof href === 'string' && href.startsWith('/');
 
   return (
     <a
       href={href}
-      target={isInternalLink ? undefined : '_blank'}
-      rel={isInternalLink ? undefined : 'noopener noreferrer'}
+      target={download || isInternalLink ? undefined : '_blank'}
+      rel={download || isInternalLink ? undefined : 'noopener noreferrer'}
+      download={download}
       className="docs-floating-link"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1086,6 +1087,20 @@ const Docs = () => {
     ),
     a: ({ node, href, children }) => {
       const text = getTextFromChildren(children);
+      const isImageHtmlDownload =
+        href === '/docs-assets/image-html/aijuhe-image.html' &&
+        text.includes('下载 HTML 文件');
+
+      if (isImageHtmlDownload) {
+        return (
+          <FloatingLinkButton
+            href={href}
+            label={text}
+            download="aijuhe-image.html"
+          />
+        );
+      }
+
       if (isAijuheEndpoint(text, href, activeDocId)) {
         return (
           <EndpointBox

@@ -54,6 +54,7 @@ import {
 import { DEFAULT_TOKEN_UNIT, QUOTA_TYPE_VALUES } from '../constants'
 import { usePricingData } from '../hooks/use-pricing-data'
 import {
+  getDynamicFixedPriceEntries,
   getDynamicPriceEntries,
   getDynamicPricingSummary,
   getDynamicPricingTiers,
@@ -269,9 +270,7 @@ function ModelHeader(props: { model: PricingModel }) {
   const { t } = useTranslation()
   const model = props.model
   const modelIconKey = model.icon || model.vendor_icon
-  const modelIcon = modelIconKey
-    ? getLobeIcon(modelIconKey, 20)
-    : null
+  const modelIcon = modelIconKey ? getLobeIcon(modelIconKey, 20) : null
   const description = model.description || model.vendor_description || null
   const tags = parseTags(model.tags)
   const isSpecialExpression =
@@ -427,7 +426,26 @@ function PriceSection(props: {
     return (
       <section>
         <SectionTitle>{t('Base Price')}</SectionTitle>
-        {dynamicSummary.primaryEntries.length > 0 ? (
+        {dynamicSummary.fixedEntries.length > 0 ? (
+          <div className='grid grid-cols-2 gap-2'>
+            {dynamicSummary.fixedEntries.map((entry) => (
+              <div
+                key={entry.key}
+                className='bg-muted/20 rounded-lg border p-3'
+              >
+                <div className='text-muted-foreground text-xs'>
+                  {entry.label || t('Default')}
+                </div>
+                <div className='text-foreground mt-1 font-mono text-base font-semibold tabular-nums'>
+                  {entry.formatted}
+                  <span className='text-muted-foreground/40 ml-1 text-xs font-normal'>
+                    / {t('request')}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : dynamicSummary.primaryEntries.length > 0 ? (
           <div className='grid grid-cols-2 gap-2'>
             {dynamicSummary.primaryEntries.map((entry) => (
               <div
@@ -671,6 +689,70 @@ function GroupPricingSection(props: {
                 {props.model.billing_expr}
               </code>
             </div>
+          </div>
+        </section>
+      )
+    }
+
+    const hasFixedPrices = dynamicTiers.some((tier) => {
+      const value = Number(tier.fixedPrice)
+      return Number.isFinite(value) && value > 0
+    })
+
+    if (hasFixedPrices) {
+      return (
+        <section>
+          <SectionTitle>{t('Pricing by Group')}</SectionTitle>
+          <AutoGroupChain model={props.model} autoGroups={props.autoGroups} />
+          <div className='space-y-3'>
+            {availableGroups.map((group) => {
+              const ratio = props.groupRatio[group] || 1
+              const fixedEntries = getDynamicFixedPriceEntries(dynamicTiers, {
+                tokenUnit: props.tokenUnit,
+                showRechargePrice,
+                priceRate: props.priceRate,
+                usdExchangeRate: props.usdExchangeRate,
+                groupRatioMultiplier: ratio,
+              })
+
+              return (
+                <div key={group} className='overflow-hidden rounded-lg border'>
+                  <div className='bg-muted/20 flex items-center justify-between gap-3 border-b px-3 py-2'>
+                    <GroupBadge group={group} size='sm' />
+                    <span className='text-muted-foreground font-mono text-xs'>
+                      {ratio}x
+                    </span>
+                  </div>
+                  <div className='overflow-x-auto'>
+                    <Table className='text-sm'>
+                      <TableHeader>
+                        <TableRow className='hover:bg-transparent'>
+                          <TableHead className={thClass}>{t('Tier')}</TableHead>
+                          <TableHead className={`${thClass} text-right`}>
+                            {t('Price')}
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {fixedEntries.map((entry) => (
+                          <TableRow key={`${group}-${entry.key}`}>
+                            <TableCell className='text-muted-foreground py-2.5'>
+                              {entry.label || t('Default')}
+                            </TableCell>
+                            <TableCell className='py-2.5 text-right font-mono'>
+                              {entry.formatted}
+                              <span className='text-muted-foreground/40 ml-1 text-xs font-normal'>
+                                / {t('request')}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </section>
       )

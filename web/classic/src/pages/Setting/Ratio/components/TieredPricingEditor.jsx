@@ -964,6 +964,26 @@ function CacheTokenEstimatorInputs({
 // Cost estimator (works with any Expr string)
 // ---------------------------------------------------------------------------
 
+function getPathValue(source, path) {
+  if (!source || typeof source !== 'object') return null;
+  const parts = String(path || '').split('.').map((part) => part.trim()).filter(Boolean);
+  if (parts.length === 0) return null;
+  let current = source;
+  for (const part of parts) {
+    if (part === '#') {
+      if (Array.isArray(current)) {
+        current = current.length;
+        continue;
+      }
+      return null;
+    }
+    if (!current || typeof current !== 'object') return null;
+    current = current[part];
+    if (current === undefined) return null;
+  }
+  return current;
+}
+
 function evalExprLocally(exprStr, p, c, extraTokenValues) {
   try {
     let matchedTier = '';
@@ -975,7 +995,15 @@ function evalExprLocally(exprStr, p, c, extraTokenValues) {
     const cacheCreateTokens = extraTokenValues.cacheCreateTokens || 0;
     const cacheCreate1hTokens = extraTokenValues.cacheCreate1hTokens || 0;
     const len = p + cacheReadTokens + cacheCreateTokens + cacheCreate1hTokens;
-    const env = { p, c, len, tier: tierFn, max: Math.max, min: Math.min, abs: Math.abs, ceil: Math.ceil, floor: Math.floor };
+    const previewRequestBody = {};
+    const previewHeaders = {};
+    const env = {
+      p, c, len, nil: null, tier: tierFn,
+      param: (path) => getPathValue(previewRequestBody, path),
+      header: (name) => previewHeaders[String(name || '').trim().toLowerCase()] || '',
+      has: (source, substr) => source != null && String(substr || '') !== '' && String(source).includes(String(substr)),
+      max: Math.max, min: Math.min, abs: Math.abs, ceil: Math.ceil, floor: Math.floor,
+    };
     for (const field of EXTRA_ESTIMATOR_FIELDS) {
       env[field.var] = extraTokenValues[field.stateKey] || 0;
     }

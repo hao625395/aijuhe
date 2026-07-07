@@ -189,6 +189,46 @@ func OaiStreamHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *http.Re
 	return usage, nil
 }
 
+func OpenaiImageStreamHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *http.Response) (*dto.Usage, *types.NewAPIError) {
+	if resp == nil || resp.Body == nil {
+		logger.LogError(c, "invalid response or response body")
+		return nil, types.NewOpenAIError(fmt.Errorf("invalid response"), types.ErrorCodeBadResponse, http.StatusInternalServerError)
+	}
+
+	usage := &dto.Usage{}
+	var lastStreamData string
+
+	helper.StreamScannerHandler(c, resp, info, func(data string, sr *helper.StreamResult) {
+		lastStreamData = data
+		info.SendResponseCount++
+		if err := helper.StringData(c, data); err != nil {
+			logger.LogError(c, "image stream data error: "+err.Error())
+			sr.Error(err)
+		}
+	})
+
+	if lastStreamData != "" {
+		var usageResp dto.SimpleResponse
+		if err := common.Unmarshal(common.StringToByteSlice(lastStreamData), &usageResp); err == nil {
+			if usageResp.InputTokens > 0 {
+				usageResp.PromptTokens += usageResp.InputTokens
+			}
+			if usageResp.OutputTokens > 0 {
+				usageResp.CompletionTokens += usageResp.OutputTokens
+			}
+			if usageResp.InputTokensDetails != nil {
+				usageResp.PromptTokensDetails.ImageTokens += usageResp.InputTokensDetails.ImageTokens
+				usageResp.PromptTokensDetails.TextTokens += usageResp.InputTokensDetails.TextTokens
+			}
+			usage = &usageResp.Usage
+			applyUsagePostProcessing(info, usage, common.StringToByteSlice(lastStreamData))
+		}
+	}
+
+	helper.Done(c)
+	return usage, nil
+}
+
 func OpenaiHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *http.Response) (*dto.Usage, *types.NewAPIError) {
 	defer service.CloseResponseBodyGracefully(resp)
 

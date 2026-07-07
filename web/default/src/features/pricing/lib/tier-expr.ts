@@ -268,6 +268,30 @@ export type EvalResult = {
   error: string | null
 }
 
+function getPathValue(source: unknown, path: string): unknown {
+  if (!source || typeof source !== 'object') return null
+  const parts = String(path || '')
+    .split('.')
+    .map((part) => part.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return null
+
+  let current: unknown = source
+  for (const part of parts) {
+    if (part === '#') {
+      if (Array.isArray(current)) {
+        current = current.length
+        continue
+      }
+      return null
+    }
+    if (!current || typeof current !== 'object') return null
+    current = (current as Record<string, unknown>)[part]
+    if (current === undefined) return null
+  }
+  return current
+}
+
 export function evalExprLocally(
   exprStr: string,
   promptTokens: number,
@@ -288,11 +312,25 @@ export function evalExprLocally(
     const cacheCreate1hTokens = extraTokenValues.cacheCreate1hTokens || 0
     const len =
       promptTokens + cacheReadTokens + cacheCreateTokens + cacheCreate1hTokens
+    const previewRequestBody: Record<string, unknown> = {}
+    const previewHeaders: Record<string, string> = {}
     const env: Record<string, unknown> = {
       p: promptTokens,
       c: completionTokens,
       len,
+      nil: null,
       tier: tierFn,
+      param: (path: string) => getPathValue(previewRequestBody, path),
+      header: (name: string) =>
+        previewHeaders[
+          String(name || '')
+            .trim()
+            .toLowerCase()
+        ] || '',
+      has: (source: unknown, substr: string) =>
+        source != null &&
+        String(substr || '') !== '' &&
+        String(source).includes(String(substr)),
       max: Math.max,
       min: Math.min,
       abs: Math.abs,

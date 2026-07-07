@@ -40,7 +40,7 @@ export const preloadDocsData = () => {
   }
 
   if (!docsDataPromise) {
-    docsDataPromise = fetch('/docs-data.json?v=20260628-image-skill', {
+    docsDataPromise = fetch('/docs-data.json?v=20260707-image-html-download', {
       cache: 'no-store',
     })
       .then((res) => res.json())

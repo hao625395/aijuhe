@@ -57,9 +57,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   const groups = props.model.enable_groups || []
   const endpoints = props.model.supported_endpoint_types || []
   const modelIconKey = props.model.icon || props.model.vendor_icon
-  const modelIcon = modelIconKey
-    ? getLobeIcon(modelIconKey, 28)
-    : null
+  const modelIcon = modelIconKey ? getLobeIcon(modelIconKey, 28) : null
   const initial = props.model.model_name?.charAt(0).toUpperCase() || '?'
   const isDynamicPricing =
     props.model.billing_mode === 'tiered_expr' &&
@@ -119,6 +117,21 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                       {dynamicSummary.rawExpression}
                     </code>
                   </span>
+                ) : dynamicSummary.fixedEntries.length > 0 ? (
+                  <>
+                    {dynamicSummary.fixedEntries.slice(0, 3).map((entry) => (
+                      <span
+                        key={entry.key}
+                        className='text-muted-foreground whitespace-nowrap'
+                      >
+                        {entry.label}{' '}
+                        <span className='text-foreground font-mono font-semibold'>
+                          {entry.formatted}
+                        </span>
+                        /{t('request')}
+                      </span>
+                    ))}
+                  </>
                 ) : dynamicSummary.primaryEntries.length > 0 ? (
                   <>
                     {dynamicSummary.primaryEntries.map((entry) => (

@@ -237,6 +237,7 @@ export type TierCondition = {
 export type ParsedTier = {
   label: string
   conditions: TierCondition[]
+  fixedPrice?: number
   [field: string]: unknown
 }
 
@@ -262,7 +263,24 @@ function parseTierBody(bodyStr: string): Record<string, number> {
   for (const [varName, field] of Object.entries(BILLING_VAR_KEY_TO_FIELD)) {
     tier[field] = coeffs[varName] || 0
   }
+  if (Object.keys(coeffs).length === 0) {
+    const fixedRawCost = evalNumericExpr(bodyStr)
+    if (fixedRawCost !== null && fixedRawCost > 0) {
+      tier.fixedPrice = fixedRawCost / 1_000_000
+    }
+  }
   return tier
+}
+
+function evalNumericExpr(exprStr: string): number | null {
+  const expr = exprStr.trim()
+  if (!expr || !/^[\d.eE+\-*/()\s]+$/.test(expr)) return null
+  try {
+    const value = Function(`"use strict"; return (${expr});`)()
+    return Number.isFinite(value) ? Number(value) : null
+  } catch {
+    return null
+  }
 }
 
 export function parseTiersFromExpr(exprStr: string): ParsedTier[] {

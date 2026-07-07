@@ -66,6 +66,13 @@ func SetRelayRouter(router *gin.Engine) {
 	{
 		playgroundRouter.POST("/chat/completions", controller.Playground)
 	}
+	asyncImageStatusRouter := router.Group("/v1/images/generations/async")
+	asyncImageStatusRouter.Use(middleware.RouteTag("relay"))
+	asyncImageStatusRouter.Use(middleware.SystemPerformanceCheck())
+	asyncImageStatusRouter.Use(middleware.TokenAuth())
+	{
+		asyncImageStatusRouter.GET("/:id", controller.GetAsyncImageGenerationTask)
+	}
 	relayV1Router := router.Group("/v1")
 	relayV1Router.Use(middleware.RouteTag("relay"))
 	relayV1Router.Use(middleware.SystemPerformanceCheck())
@@ -78,6 +85,13 @@ func SetRelayRouter(router *gin.Engine) {
 		wsRouter.GET("/realtime", func(c *gin.Context) {
 			controller.Relay(c, types.RelayFormatOpenAIRealtime)
 		})
+	}
+	{
+		asyncImageSubmitRouter := relayV1Router.Group("")
+		asyncImageSubmitRouter.Use(middleware.Distribute())
+		{
+			asyncImageSubmitRouter.POST("/images/generations/async", controller.SubmitAsyncImageGeneration)
+		}
 	}
 	{
 		//http router

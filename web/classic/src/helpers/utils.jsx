@@ -32,6 +32,34 @@ const HTMLToastContent = ({ htmlContent }) => {
   return <div dangerouslySetInnerHTML={{ __html: htmlContent }} />;
 };
 export default HTMLToastContent;
+
+function parseFixedPriceTiersFromExpr(exprStr) {
+  const exprBody = String(exprStr || '').replace(/^v\d+:/, '');
+  const tiers = [];
+  const tierRe = /tier\("([^"]*)",\s*([^)]+)\)/g;
+  let match;
+  while ((match = tierRe.exec(exprBody)) !== null) {
+    const body = match[2].trim();
+    BILLING_VAR_REGEX.lastIndex = 0;
+    if (BILLING_VAR_REGEX.test(body)) {
+      BILLING_VAR_REGEX.lastIndex = 0;
+      continue;
+    }
+    BILLING_VAR_REGEX.lastIndex = 0;
+    if (!/^[\d.eE+\-*/()\s]+$/.test(body)) continue;
+    try {
+      const rawCost = Function(`"use strict"; return (${body});`)();
+      const fixedPrice = Number(rawCost) / 1000000;
+      if (Number.isFinite(fixedPrice) && fixedPrice > 0) {
+        tiers.push({ label: match[1], fixedPrice });
+      }
+    } catch {
+      // Ignore expressions that cannot be safely evaluated as numbers.
+    }
+  }
+  return tiers;
+}
+
 export function isAdmin() {
   let user = localStorage.getItem('user');
   if (!user) return false;
@@ -928,6 +956,19 @@ export const formatDynamicPriceSummary = (billingExpr, t, groupRatio = 1) => {
   const hasCoeffs = 'p' in varCoeffs || 'c' in varCoeffs;
 
   const varLabels = BILLING_PRICING_VARS.map((v) => [v.key, v.label]);
+  const fixedTiers = parseFixedPriceTiersFromExpr(billingExpr)
+      .filter((tier) => Number.isFinite(Number(tier.fixedPrice)) && Number(tier.fixedPrice) > 0)
+      .sort((a, b) => {
+        const aNum = Number.parseFloat(a.label || '');
+        const bNum = Number.parseFloat(b.label || '');
+        if (Number.isFinite(aNum) && Number.isFinite(bNum) && aNum !== bNum) {
+          return aNum - bNum;
+        }
+        return String(a.label || '').localeCompare(String(b.label || ''), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        });
+      });
 
   const hasTimeCondition = /\b(?:hour|minute|weekday|month|day)\(/.test(exprBody);
   const hasRequestCondition = /\b(?:param|header)\(/.test(exprBody);
@@ -951,6 +992,15 @@ export const formatDynamicPriceSummary = (billingExpr, t, groupRatio = 1) => {
               </span>
             ) : null,
           )}
+        </>
+      )}
+      {!hasCoeffs && fixedTiers.length > 0 && (
+        <>
+          {fixedTiers.slice(0, 3).map((tier, index) => (
+            <span key={`${tier.label || 'tier'}-${index}`} style={lineStyle}>
+              {`${tier.label || t('默认')} ${symbol}${(Number(tier.fixedPrice) * gr * rate).toFixed(4)} / ${t('次')}`}
+            </span>
+          ))}
         </>
       )}
       {(tierCount > 1 || hasTimeCondition || hasRequestCondition) && (

@@ -85,6 +85,23 @@ const TIME_FUNC_LABELS: Record<string, string> = {
   day: 'Day',
 }
 
+const getTierSortValue = (label?: string) => {
+  const match = String(label || '').match(/(\d+(?:\.\d+)?)/)
+  return match ? Number(match[1]) : Number.POSITIVE_INFINITY
+}
+
+const compareTierLabel = (a: ParsedTier, b: ParsedTier) => {
+  const aValue = getTierSortValue(a.label)
+  const bValue = getTierSortValue(b.label)
+  if (Number.isFinite(aValue) && Number.isFinite(bValue) && aValue !== bValue) {
+    return aValue - bValue
+  }
+  return String(a.label || '').localeCompare(String(b.label || ''), undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  })
+}
+
 function formatTokenHint(value: string | number): string {
   const n = Number(value)
   if (!Number.isFinite(n) || n === 0) return ''
@@ -226,6 +243,16 @@ export function DynamicPricingBreakdown({
       (tier) => Number(tier[v.field as string as keyof ParsedTier] || 0) > 0
     )
   })
+  const hasFixedPrices = tiers.some((tier) => {
+    const value = Number(tier.fixedPrice)
+    return Number.isFinite(value) && value > 0
+  })
+  const sortedTiers = [...tiers].sort(compareTierLabel)
+  const formatFixedPrice = (value: unknown) => {
+    const price = Number(value)
+    if (!Number.isFinite(price) || price <= 0) return '-'
+    return `${symbol}${(price * rate).toFixed(4)}`
+  }
 
   return (
     <section className='min-w-0 py-3 sm:py-4'>
@@ -249,7 +276,7 @@ export function DynamicPricingBreakdown({
             {t('Tiered price table')}
           </div>
           <div className='space-y-1.5 sm:hidden'>
-            {tiers.map((tier, i) => {
+            {sortedTiers.map((tier, i) => {
               const condSummary = formatConditionSummary(tier.conditions, t)
               const isMatched =
                 matchedTierLabel != null &&
@@ -285,6 +312,16 @@ export function DynamicPricingBreakdown({
                     </div>
                   )}
                   <div className='grid grid-cols-2 gap-x-3 gap-y-1.5'>
+                    {hasFixedPrices && (
+                      <div className='min-w-0'>
+                        <div className='text-muted-foreground truncate text-[10px] font-medium tracking-wider uppercase'>
+                          {t('Price')}
+                        </div>
+                        <div className='truncate font-mono text-sm font-semibold'>
+                          {formatFixedPrice(tier.fixedPrice)}
+                        </div>
+                      </div>
+                    )}
                     {visiblePriceFields.map((v) => {
                       const value = Number(
                         tier[v.field as string as keyof ParsedTier] || 0
@@ -314,6 +351,11 @@ export function DynamicPricingBreakdown({
                   <TableHead className='text-muted-foreground py-2 font-medium'>
                     {t('Tier')}
                   </TableHead>
+                  {hasFixedPrices && (
+                    <TableHead className='text-muted-foreground py-2 text-right font-medium'>
+                      {t('Price')}
+                    </TableHead>
+                  )}
                   {visiblePriceFields.map((v) => (
                     <TableHead
                       key={v.field}
@@ -325,7 +367,7 @@ export function DynamicPricingBreakdown({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tiers.map((tier, i) => {
+                {sortedTiers.map((tier, i) => {
                   const condSummary = formatConditionSummary(tier.conditions, t)
                   const isMatched =
                     normalizedMatchedTierLabel !== '' &&
@@ -362,6 +404,11 @@ export function DynamicPricingBreakdown({
                           </div>
                         )}
                       </TableCell>
+                      {hasFixedPrices && (
+                        <TableCell className='py-2.5 text-right align-top font-mono'>
+                          {formatFixedPrice(tier.fixedPrice)}
+                        </TableCell>
+                      )}
                       {visiblePriceFields.map((v) => {
                         const value = Number(
                           tier[v.field as string as keyof ParsedTier] || 0

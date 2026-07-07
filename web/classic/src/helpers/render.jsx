@@ -2239,7 +2239,24 @@ function parseTierBody(bodyStr) {
   for (const [varName, field] of Object.entries(BILLING_VAR_KEY_TO_FIELD)) {
     tier[field] = coeffs[varName] || 0;
   }
+  if (Object.keys(coeffs).length === 0) {
+    const fixedRawCost = evalNumericExpr(bodyStr);
+    if (fixedRawCost !== null && fixedRawCost > 0) {
+      tier.fixedPrice = fixedRawCost / 1000000;
+    }
+  }
   return tier;
+}
+
+function evalNumericExpr(exprStr) {
+  const expr = String(exprStr || '').trim();
+  if (!expr || !/^[\d.eE+\-*/()\s]+$/.test(expr)) return null;
+  try {
+    const value = Function(`"use strict"; return (${expr});`)();
+    return Number.isFinite(value) ? Number(value) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function parseTiersFromExpr(exprStr) {

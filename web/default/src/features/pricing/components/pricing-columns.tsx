@@ -107,9 +107,7 @@ export function usePricingColumns(
       cell: ({ row }) => {
         const model = row.original
         const modelIconKey = model.icon || model.vendor_icon
-        const modelIcon = modelIconKey
-          ? getLobeIcon(modelIconKey, 14)
-          : null
+        const modelIcon = modelIconKey ? getLobeIcon(modelIconKey, 14) : null
 
         return (
           <div className='flex min-w-[200px] items-center gap-2'>
@@ -172,6 +170,34 @@ export function usePricingColumns(
                 <code className='text-muted-foreground/70 mt-1 line-clamp-2 block font-mono text-[10px] leading-relaxed break-all'>
                   {dynamicSummary.rawExpression}
                 </code>
+              </div>
+            )
+          }
+
+          if (dynamicSummary.fixedEntries.length > 0) {
+            return (
+              <div className='min-w-[180px]'>
+                <span className='font-mono text-sm tabular-nums'>
+                  {dynamicSummary.fixedEntries
+                    .slice(0, 3)
+                    .map((entry, index) => (
+                      <span key={entry.key}>
+                        {index > 0 && (
+                          <span className='text-muted-foreground/40 mx-1'>
+                            /
+                          </span>
+                        )}
+                        {entry.label} {stripTrailingZeros(entry.formatted)}
+                      </span>
+                    ))}
+                </span>
+                <div className='text-muted-foreground/50 text-[10px]'>
+                  / {t('request')}
+                  {dynamicSummary.tierCount > 1 &&
+                    ` 路 ${t('{{count}} tiers', {
+                      count: dynamicSummary.tierCount,
+                    })}`}
+                </div>
               </div>
             )
           }

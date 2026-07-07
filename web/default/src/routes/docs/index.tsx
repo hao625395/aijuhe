@@ -811,7 +811,7 @@ const Docs: React.FC = () => {
       return
     }
 
-    fetch('/docs-data.json?v=20260628-image-skill', { cache: 'no-store' })
+    fetch('/docs-data.json?v=20260707-image-html-download', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data: DocItem[]) => {
         docsDataCache = data
@@ -971,20 +971,36 @@ const Docs: React.FC = () => {
     td: ({ node, ...props }: any) => (
       <td className='px-4 py-2 text-muted-foreground' {...props} />
     ),
-    a: ({ node, href, children, ...props }: any) => (
-      <a 
-        href={href} 
-        target='_blank' 
-        rel='noopener noreferrer' 
-        className='text-primary hover:underline font-medium inline-flex items-center gap-0.5' 
-        {...props}
-      >
-        {children}
-        <svg className='h-3.5 w-3.5 inline-block' fill='none' viewBox='0 0 24 24' stroke='currentColor' strokeWidth={2}>
-          <path strokeLinecap='round' strokeLinejoin='round' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
-        </svg>
-      </a>
-    ),
+    a: ({ node, href, children, ...props }: any) => {
+      const text = React.Children.toArray(children).join('')
+      const isImageHtmlDownload =
+        href === '/docs-assets/image-html/aijuhe-image.html' &&
+        text.includes('下载 HTML 文件')
+
+      return (
+        <a
+          href={href}
+          target={isImageHtmlDownload ? undefined : '_blank'}
+          rel={isImageHtmlDownload ? undefined : 'noopener noreferrer'}
+          download={isImageHtmlDownload ? 'aijuhe-image.html' : undefined}
+          className={
+            isImageHtmlDownload
+              ? 'my-2 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90'
+              : 'text-primary hover:underline font-medium inline-flex items-center gap-0.5'
+          }
+          {...props}
+        >
+          {children}
+          <svg className='h-3.5 w-3.5 inline-block' fill='none' viewBox='0 0 24 24' stroke='currentColor' strokeWidth={2}>
+            {isImageHtmlDownload ? (
+              <path strokeLinecap='round' strokeLinejoin='round' d='M12 3v12m0 0l4-4m-4 4l-4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2' />
+            ) : (
+              <path strokeLinecap='round' strokeLinejoin='round' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
+            )}
+          </svg>
+        </a>
+      )
+    },
     code({ node, inline, className, children, ...props }: any) {
       const match = /language-(\\w+)/.exec(className || '')
       const codeString = String(children).replace(/\\n$/, '')
