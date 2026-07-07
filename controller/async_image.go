@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"time"
 
@@ -186,8 +187,8 @@ func normalizeAsyncImageRequestBody(body []byte) ([]byte, error) {
 	if err := common.Unmarshal(body, &payload); err != nil {
 		return nil, err
 	}
-	payload["stream"] = false
-	payload["response_format"] = "url"
+	payload["stream"] = true
+	payload["response_format"] = "b64_json"
 	return common.Marshal(payload)
 }
 
@@ -255,7 +256,7 @@ func cloneAsyncImageHeaders(src http.Header, forceJSON bool) http.Header {
 	if forceJSON {
 		dst.Set("Content-Type", "application/json")
 	}
-	dst.Set("Accept", "application/json")
+	dst.Set("Accept", "text/event-stream")
 	return dst
 }
 
@@ -299,7 +300,7 @@ func runAsyncImageRelay(taskID string, upstreamPath string, body []byte, headers
 	if statusCode == 0 {
 		statusCode = http.StatusOK
 	}
-	responseBody := recorder.Body.Bytes()
+	responseBody := normalizeAsyncImageResponseBody(recorder.Body.Bytes())
 	now := time.Now()
 	updateAsyncImageTask(taskID, func(task *asyncImageTask) {
 		task.StatusCode = statusCode
@@ -315,6 +316,36 @@ func runAsyncImageRelay(taskID string, upstreamPath string, body []byte, headers
 		task.Status = asyncImageStatusSucceeded
 		task.Response = append([]byte(nil), responseBody...)
 	})
+}
+
+func normalizeAsyncImageResponseBody(body []byte) []byte {
+	if len(body) == 0 || !bytes.Contains(body, []byte("data:")) {
+		return body
+	}
+
+	var lastJSON []byte
+	normalized := strings.ReplaceAll(string(body), "\r\n", "\n")
+	frames := strings.Split(normalized, "\n\n")
+	for _, frame := range frames {
+		for _, line := range strings.Split(frame, "\n") {
+			line = strings.TrimSpace(line)
+			if !strings.HasPrefix(line, "data:") {
+				continue
+			}
+			data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+			if data == "" || data == "[DONE]" {
+				continue
+			}
+			var raw any
+			if err := common.Unmarshal(common.StringToByteSlice(data), &raw); err == nil {
+				lastJSON = []byte(data)
+			}
+		}
+	}
+	if len(lastJSON) > 0 {
+		return lastJSON
+	}
+	return body
 }
 
 func markAsyncImageTaskFailed(taskID string, statusCode int, message string) {
