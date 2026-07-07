@@ -52,6 +52,14 @@ var asyncImageTasks = struct {
 }
 
 func SubmitAsyncImageGeneration(c *gin.Context) {
+	submitAsyncImageRelay(c, "/v1/images/generations", true)
+}
+
+func SubmitAsyncImageEdit(c *gin.Context) {
+	submitAsyncImageRelay(c, "/v1/images/edits", false)
+}
+
+func submitAsyncImageRelay(c *gin.Context, upstreamPath string, normalizeJSON bool) {
 	body, err := getAsyncImageRequestBody(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -64,16 +72,18 @@ func SubmitAsyncImageGeneration(c *gin.Context) {
 		return
 	}
 
-	body, err = normalizeAsyncImageRequestBody(body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": types.OpenAIError{
-				Message: err.Error(),
-				Type:    "invalid_request_error",
-				Code:    types.ErrorCodeInvalidRequest,
-			},
-		})
-		return
+	if normalizeJSON {
+		body, err = normalizeAsyncImageRequestBody(body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": types.OpenAIError{
+					Message: err.Error(),
+					Type:    "invalid_request_error",
+					Code:    types.ErrorCodeInvalidRequest,
+				},
+			})
+			return
+		}
 	}
 
 	task := &asyncImageTask{
@@ -87,16 +97,16 @@ func SubmitAsyncImageGeneration(c *gin.Context) {
 
 	storeAsyncImageTask(task)
 
-	headers := cloneAsyncImageHeaders(c.Request.Header)
+	headers := cloneAsyncImageHeaders(c.Request.Header, normalizeJSON)
 	keys := cloneGinKeys(c)
 
-	go runAsyncImageGeneration(task.ID, body, headers, keys)
+	go runAsyncImageRelay(task.ID, upstreamPath, body, headers, keys)
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"id":       task.ID,
 		"object":   "image_generation_task",
 		"status":   task.Status,
-		"poll_url": "/v1/images/generations/async/" + task.ID,
+		"poll_url": upstreamPath + "/async/" + task.ID,
 	})
 }
 
@@ -240,9 +250,11 @@ func removeOldestAsyncImageTaskLocked() {
 	}
 }
 
-func cloneAsyncImageHeaders(src http.Header) http.Header {
+func cloneAsyncImageHeaders(src http.Header, forceJSON bool) http.Header {
 	dst := src.Clone()
-	dst.Set("Content-Type", "application/json")
+	if forceJSON {
+		dst.Set("Content-Type", "application/json")
+	}
 	dst.Set("Accept", "application/json")
 	return dst
 }
@@ -256,14 +268,14 @@ func cloneGinKeys(c *gin.Context) map[string]any {
 	return keys
 }
 
-func runAsyncImageGeneration(taskID string, body []byte, headers http.Header, keys map[string]any) {
+func runAsyncImageRelay(taskID string, upstreamPath string, body []byte, headers http.Header, keys map[string]any) {
 	updateAsyncImageTask(taskID, func(task *asyncImageTask) {
 		task.Status = asyncImageStatusRunning
 	})
 
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/images/generations", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, upstreamPath, bytes.NewReader(body))
 	if err != nil {
 		markAsyncImageTaskFailed(taskID, http.StatusInternalServerError, err.Error())
 		return
